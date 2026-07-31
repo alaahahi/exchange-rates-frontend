@@ -1,0 +1,87 @@
+---
+import type { ExchangeRate } from '../lib/api/types';
+
+interface Props {
+  rates: ExchangeRate[];
+}
+
+const { rates } = Astro.props;
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat('ar-IQ', {
+    maximumFractionDigits: 4,
+  }).format(value);
+}
+
+function formatChange(change: number | null): string {
+  if (change === null || Number.isNaN(change)) return '—';
+  const sign = change > 0 ? '+' : '';
+  return `${sign}${formatNumber(change)}%`;
+}
+
+function changeClass(change: number | null): string {
+  if (change === null || change === 0) return 'text-[var(--color-muted)]';
+  return change > 0 ? 'text-[var(--color-up)]' : 'text-[var(--color-down)]';
+}
+---
+
+{/* Desktop / tablet table */}
+<div class="hidden overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] shadow-sm md:block">
+  <table class="w-full border-collapse text-sm" aria-label="جدول أسعار صرف العملات">
+    <thead class="bg-[var(--color-brand)] text-white">
+      <tr>
+        <th scope="col" class="px-4 py-3 text-right font-semibold">العملة</th>
+        <th scope="col" class="px-4 py-3 text-right font-semibold">الاسم</th>
+        <th scope="col" class="px-4 py-3 text-right font-semibold">شراء</th>
+        <th scope="col" class="px-4 py-3 text-right font-semibold">بيع</th>
+        <th scope="col" class="px-4 py-3 text-right font-semibold">التغير</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rates.map((rate) => (
+          <tr class="border-t border-[var(--color-line)] odd:bg-white even:bg-[#f8fbf9]">
+            <th scope="row" class="px-4 py-3 text-right font-bold tracking-wide">
+              {rate.currency}
+            </th>
+            <td class="px-4 py-3 text-right text-[var(--color-muted)]">{rate.name}</td>
+            <td class="px-4 py-3 text-right font-semibold tabular-nums">{formatNumber(rate.buy)}</td>
+            <td class="px-4 py-3 text-right font-semibold tabular-nums">{formatNumber(rate.sell)}</td>
+            <td class:list={['px-4 py-3 text-right font-semibold tabular-nums', changeClass(rate.change)]}>
+              {formatChange(rate.change)}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+{/* Mobile cards */}
+<ul class="m-0 grid list-none gap-3 p-0 md:hidden" aria-label="أسعار صرف العملات">
+  {
+    rates.map((rate) => (
+      <li class="rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-4 shadow-sm">
+        <div class="mb-3 flex items-baseline justify-between gap-3">
+          <div>
+            <p class="m-0 text-lg font-bold tracking-wide">{rate.currency}</p>
+            <p class="m-0 text-sm text-[var(--color-muted)]">{rate.name}</p>
+          </div>
+          <p class:list={['m-0 text-sm font-semibold', changeClass(rate.change)]}>
+            {formatChange(rate.change)}
+          </p>
+        </div>
+        <dl class="m-0 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <dt class="text-[var(--color-muted)]">شراء</dt>
+            <dd class="m-0 mt-1 text-base font-bold tabular-nums">{formatNumber(rate.buy)}</dd>
+          </div>
+          <div>
+            <dt class="text-[var(--color-muted)]">بيع</dt>
+            <dd class="m-0 mt-1 text-base font-bold tabular-nums">{formatNumber(rate.sell)}</dd>
+          </div>
+        </dl>
+      </li>
+    ))
+  }
+</ul>

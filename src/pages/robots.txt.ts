@@ -1,0 +1,18 @@
+import type { APIRoute } from 'astro';
+import { siteConfig } from '../config/site';
+
+export const GET: APIRoute = () => {
+  const sitemapUrl = new URL('/sitemap.xml', siteConfig.url).toString();
+  const body = `User-agent: *
+Allow: /
+
+Sitemap: ${sitemapUrl}
+`;
+
+  return new Response(body, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+};

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="#39'1 51A 'D9ED'*">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d6b4c"/>
+      <stop offset="100%" stop-color="#0a523a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="280" fill="#ffffff" font-size="72" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700">#39'1 51A 'D9ED'* 'DJHE</text>
+  <text x="80" y="360" fill="#d7e3dd" font-size="36" font-family="Segoe UI, Tahoma, sans-serif">EB'(D 'D/JF'1 'D91'BJ</text>
+</svg>

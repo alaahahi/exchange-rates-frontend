@@ -1,0 +1,21 @@
+---
+interface Props {
+  type: 'error' | 'empty';
+  message: string;
+}
+
+const { type, message } = Astro.props;
+const role = type === 'error' ? 'alert' : 'status';
+---
+
+<div
+  class:list={[
+    'rounded-2xl border px-4 py-6 text-center',
+    type === 'error'
+      ? 'border-red-200 bg-red-50 text-red-800'
+      : 'border-[var(--color-line)] bg-white text-[var(--color-muted)]',
+  ]}
+  role={role}
+>
+  <p class="m-0 text-base leading-relaxed">{message}</p>
+</div>
