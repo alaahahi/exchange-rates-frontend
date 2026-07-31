@@ -1,14 +1,22 @@
 @import "tailwindcss";
 
 @theme {
+  /* Extracted from public/logo.png — dinar-now brand */
   --font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
-  --color-surface: #f4f7f5;
-  --color-ink: #0f1f1a;
-  --color-muted: #5b6b64;
-  --color-brand: #0d6b4c;
-  --color-brand-dark: #0a523a;
-  --color-line: #d7e3dd;
-  --color-up: #0f7a45;
+  --color-navy: #0d2149;
+  --color-navy-dark: #081530;
+  --color-gold: #c29953;
+  --color-gold-dark: #a67d3a;
+  --color-gold-soft: #e8d4a8;
+  --color-surface: #f5f6f9;
+  --color-ink: #0d2149;
+  --color-muted: #5c6578;
+  --color-brand: #0d2149;
+  --color-brand-dark: #081530;
+  --color-accent: #c29953;
+  --color-accent-dark: #a67d3a;
+  --color-line: #d8dde8;
+  --color-up: #1a7a4c;
   --color-down: #b42318;
   --color-card: #ffffff;
 }
@@ -23,11 +31,12 @@ body {
   font-family: var(--font-sans);
   color: var(--color-ink);
   background:
-    radial-gradient(circle at top right, rgba(13, 107, 76, 0.08), transparent 40%),
-    linear-gradient(180deg, #eef5f1 0%, var(--color-surface) 40%, #e8f0ec 100%);
+    radial-gradient(circle at top left, rgba(194, 153, 83, 0.12), transparent 42%),
+    radial-gradient(circle at top right, rgba(13, 33, 73, 0.06), transparent 38%),
+    linear-gradient(180deg, #f8f7f3 0%, var(--color-surface) 45%, #eef0f5 100%);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }

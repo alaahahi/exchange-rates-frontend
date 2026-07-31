@@ -1,6 +1,12 @@
-# Exchange Rates Frontend
+# dinar-now Frontend
 
-Astro SSR website that displays live exchange rates from the Laravel API. Optimized for Arabic RTL, SEO, and Cloudflare Workers.
+Astro SSR website for **dinar-now** — live exchange rates from the Laravel API. Arabic RTL, SEO-first, Cloudflare Workers.
+
+## Brand
+
+- Logo: `public/logo.png`
+- Navy: `#0D2149`
+- Gold: `#C29953`
 
 ## Requirements
 
@@ -22,7 +28,7 @@ cp .env.example .env
 |----------|-------------|---------|
 | `PUBLIC_SITE_URL` | Canonical site URL | `https://www.example.com` |
 | `PUBLIC_API_URL` | Laravel API base (v1) | `https://api.example.com/api/v1` |
-| `PUBLIC_SITE_NAME` | Brand name in header | `أسعار الصرف` |
+| `PUBLIC_SITE_NAME` | Brand name | `dinar-now` |
 
 All `PUBLIC_*` values are exposed to the browser. Never put secrets here.
 
@@ -40,6 +46,7 @@ php -S 127.0.0.1:8000 -t public
 ```env
 PUBLIC_SITE_URL=http://localhost:4321
 PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
+PUBLIC_SITE_NAME=dinar-now
 ```
 
 3. Start Astro:
@@ -56,20 +63,18 @@ Open http://localhost:4321
 npm run build
 ```
 
-Output is Cloudflare Worker compatible (`dist/` + worker entry).
+Output is Cloudflare Worker compatible (`dist/` + worker entry via `wrangler.jsonc`).
 
 ## Cloudflare deployment
-
-The project uses `@astrojs/cloudflare` and `wrangler.jsonc`.
 
 ```bash
 npm run build
 npx wrangler deploy
 ```
 
-Or connect the Git repo to Cloudflare Workers/Pages and set build command `npm run build`.
+Or connect the Git repo to Cloudflare and set build command `npm run build`.
 
-Configure production env vars in Cloudflare dashboard:
+Configure production env vars:
 
 - `PUBLIC_SITE_URL`
 - `PUBLIC_API_URL`
@@ -77,7 +82,7 @@ Configure production env vars in Cloudflare dashboard:
 
 ## Architecture notes
 
-- Server-rendered HTML for the rates table (SEO-friendly, no SPA).
+- Server-rendered HTML for the rates table (SEO-friendly, no SPA)
 - Central API client: `src/lib/api/`
 - SEO config: `src/config/site.ts` + `SeoHead.astro` + JSON-LD
 - Refresh button reloads the page (no polling)

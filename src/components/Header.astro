@@ -2,17 +2,20 @@
 import { siteConfig } from '../config/site';
 ---
 
-<header class="border-b border-[var(--color-line)] bg-white/80 backdrop-blur-sm">
-  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+<header class="border-b border-[var(--color-line)] bg-white/90 backdrop-blur-sm">
+  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
     <a href="/" class="flex items-center gap-3 no-underline" aria-label={siteConfig.name}>
-      <span
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-brand)] text-sm font-bold text-white"
-        aria-hidden="true"
-      >
-        د
-      </span>
-      <span class="text-lg font-bold text-[var(--color-ink)]">{siteConfig.name}</span>
+      <img
+        src="/logo.png"
+        alt={siteConfig.name}
+        width="160"
+        height="72"
+        class="h-12 w-auto sm:h-14"
+        decoding="async"
+      />
     </a>
-    <p class="hidden text-sm text-[var(--color-muted)] sm:block">مقابل الدينار العراقي</p>
+    <p class="hidden text-sm font-medium text-[var(--color-muted)] sm:block">
+      {siteConfig.tagline}
+    </p>
   </div>
 </header>
