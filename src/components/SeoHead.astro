@@ -43,6 +43,9 @@ const otherLocales = (Object.keys(localeMeta) as Lang[])
 {keywords && <meta name="keywords" content={keywords} />}
 <meta name="robots" content={robots} />
 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+{siteConfig.googleSiteVerification && (
+  <meta name="google-site-verification" content={siteConfig.googleSiteVerification} />
+)}
 <meta name="author" content={siteConfig.name} />
 <meta name="geo.region" content="IQ" />
 <meta name="geo.placename" content="Iraq" />

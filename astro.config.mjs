@@ -5,7 +5,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
   output: 'server',
-  site: process.env.PUBLIC_SITE_URL || 'https://www.example.com',
+  site: process.env.PUBLIC_SITE_URL || 'https://dinar-now.com',
   i18n: {
     defaultLocale: 'ar',
     locales: ['ar', 'en'],
