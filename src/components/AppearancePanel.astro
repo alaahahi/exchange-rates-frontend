@@ -1,0 +1,254 @@
+---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+import { appearancePresets, defaultAppearance } from '../lib/appearance';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+
+const fields = [
+  { key: 'brand', label: t('colorBrand'), value: defaultAppearance.brand },
+  { key: 'accent', label: t('colorAccent'), value: defaultAppearance.accent },
+  { key: 'up', label: t('colorUp'), value: defaultAppearance.up },
+  { key: 'down', label: t('colorDown'), value: defaultAppearance.down },
+] as const;
+
+const presets = [
+  { id: 'default', label: t('colorPresetDefault'), colors: appearancePresets.default },
+  { id: 'market', label: t('colorPresetMarket'), colors: appearancePresets.market },
+  { id: 'soft', label: t('colorPresetSoft'), colors: appearancePresets.soft },
+];
+---
+
+<div class="appearance relative" id="appearance-root">
+  <button
+    type="button"
+    id="appearance-toggle"
+    class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white transition hover:border-[var(--color-gold)] hover:text-[var(--color-gold-soft)]"
+    aria-label={t('colorPanel')}
+    aria-expanded="false"
+    aria-controls="appearance-panel"
+  >
+    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 3a9 9 0 1 0 0 18 2.4 2.4 0 0 0 0-4.8h-1.2a2.4 2.4 0 1 1 0-4.8H12A4.8 4.8 0 0 0 12 3Z"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linejoin="round"
+      ></path>
+      <circle cx="7.8" cy="9" r="1.1" fill="currentColor"></circle>
+      <circle cx="10.2" cy="6.6" r="1.1" fill="currentColor"></circle>
+      <circle cx="14.2" cy="6.6" r="1.1" fill="currentColor"></circle>
+      <circle cx="16.6" cy="9.2" r="1.1" fill="currentColor"></circle>
+    </svg>
+  </button>
+
+  <div
+    id="appearance-panel"
+    class="appearance-panel absolute end-0 top-[calc(100%+0.5rem)] z-50 hidden w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-3 text-[var(--color-ink)] shadow-xl"
+    role="dialog"
+    aria-label={t('colorPanel')}
+  >
+    <p class="m-0 mb-3 text-sm font-bold">{t('colorPanel')}</p>
+
+    <div class="mb-3 grid grid-cols-4 gap-2">
+      {
+        fields.map((field) => (
+          <label class="flex cursor-pointer flex-col items-center gap-1.5">
+            <span class="relative h-9 w-9 overflow-hidden rounded-full border border-[var(--color-line)] shadow-inner">
+              <input
+                type="color"
+                class="appearance-swatch absolute inset-[-25%] h-[150%] w-[150%] cursor-pointer border-0 bg-transparent p-0"
+                data-appearance={field.key}
+                value={field.value}
+                aria-label={field.label}
+              />
+            </span>
+            <span class="text-[10px] font-semibold leading-tight text-[var(--color-muted)]">{field.label}</span>
+          </label>
+        ))
+      }
+    </div>
+
+    <p class="m-0 mb-2 text-[11px] font-semibold text-[var(--color-muted)]">{t('colorPresets')}</p>
+    <div class="mb-3 flex flex-wrap gap-1.5">
+      {
+        presets.map((preset) => (
+          <button
+            type="button"
+            class="appearance-preset inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-gold)]"
+            data-preset={preset.id}
+          >
+            <span class="flex gap-0.5" aria-hidden="true">
+              <span class="h-2 w-2 rounded-full" style={`background:${preset.colors.brand}`}></span>
+              <span class="h-2 w-2 rounded-full" style={`background:${preset.colors.accent}`}></span>
+              <span class="h-2 w-2 rounded-full" style={`background:${preset.colors.up}`}></span>
+              <span class="h-2 w-2 rounded-full" style={`background:${preset.colors.down}`}></span>
+            </span>
+            {preset.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <button
+      type="button"
+      id="appearance-reset"
+      class="w-full rounded-xl border border-[var(--color-line)] bg-transparent px-3 py-2 text-xs font-semibold text-[var(--color-muted)] transition hover:border-[var(--color-gold)] hover:text-[var(--color-ink)]"
+    >
+      {t('colorReset')}
+    </button>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    try {
+      var raw = localStorage.getItem('dinar-appearance');
+      if (!raw) return;
+      var c = JSON.parse(raw);
+      if (!c || !c.brand || !c.accent || !c.up || !c.down) return;
+      var root = document.documentElement;
+      function darken(hex, amount) {
+        var n = parseInt(String(hex).replace('#', ''), 16);
+        if (isNaN(n)) return hex;
+        var r = Math.max(0, ((n >> 16) & 255) - amount);
+        var g = Math.max(0, ((n >> 8) & 255) - amount);
+        var b = Math.max(0, (n & 255) - amount);
+        return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+      }
+      root.style.setProperty('--color-navy', c.brand);
+      root.style.setProperty('--color-navy-dark', darken(c.brand, 18));
+      root.style.setProperty('--color-brand', c.brand);
+      root.style.setProperty('--color-brand-dark', darken(c.brand, 18));
+      root.style.setProperty('--color-gold', c.accent);
+      root.style.setProperty('--color-gold-dark', darken(c.accent, 24));
+      root.style.setProperty('--color-accent', c.accent);
+      root.style.setProperty('--color-accent-dark', darken(c.accent, 24));
+      root.style.setProperty('--color-up', c.up);
+      root.style.setProperty('--color-down', c.down);
+      root.style.setProperty('--color-theme', c.brand);
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', c.brand);
+    } catch (e) {}
+  })();
+</script>
+
+<script>
+  import {
+    APPEARANCE_STORAGE_KEY,
+    applyAppearance,
+    appearancePresets,
+    clearAppearance,
+    defaultAppearance,
+    readStoredAppearance,
+    saveAppearance,
+    type AppearanceColors,
+  } from '../lib/appearance';
+
+  const root = document.getElementById('appearance-root');
+  const toggle = document.getElementById('appearance-toggle');
+  const panel = document.getElementById('appearance-panel');
+  const resetBtn = document.getElementById('appearance-reset');
+  if (!root || !toggle || !panel) {
+    // no-op
+  } else {
+    const inputs = Array.from(
+      panel.querySelectorAll<HTMLInputElement>('input[data-appearance]'),
+    );
+
+    function currentFromInputs(): AppearanceColors {
+      const map = Object.fromEntries(
+        inputs.map((input) => [input.dataset.appearance || '', input.value]),
+      ) as Record<string, string>;
+      return {
+        brand: map.brand || defaultAppearance.brand,
+        accent: map.accent || defaultAppearance.accent,
+        up: map.up || defaultAppearance.up,
+        down: map.down || defaultAppearance.down,
+      };
+    }
+
+    function syncInputs(colors: AppearanceColors): void {
+      inputs.forEach((input) => {
+        const key = input.dataset.appearance as keyof AppearanceColors | undefined;
+        if (!key) return;
+        input.value = colors[key];
+      });
+    }
+
+    function paint(colors: AppearanceColors, persist: boolean): void {
+      applyAppearance(colors);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      meta?.setAttribute('content', colors.brand);
+      if (persist) saveAppearance(colors);
+    }
+
+    const stored = readStoredAppearance();
+    if (stored) {
+      syncInputs(stored);
+      paint(stored, false);
+    }
+
+    function setOpen(open: boolean): void {
+      panel.classList.toggle('hidden', !open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setOpen(panel.classList.contains('hidden'));
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!root.contains(event.target as Node)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+
+    inputs.forEach((input) => {
+      input.addEventListener('input', () => paint(currentFromInputs(), true));
+    });
+
+    panel.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.preset || 'default';
+        const colors = appearancePresets[id] ?? defaultAppearance;
+        syncInputs(colors);
+        paint(colors, true);
+      });
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      clearAppearance();
+      syncInputs(defaultAppearance);
+      document.documentElement.style.removeProperty('--color-navy');
+      document.documentElement.style.removeProperty('--color-navy-dark');
+      document.documentElement.style.removeProperty('--color-brand');
+      document.documentElement.style.removeProperty('--color-brand-dark');
+      document.documentElement.style.removeProperty('--color-gold');
+      document.documentElement.style.removeProperty('--color-gold-dark');
+      document.documentElement.style.removeProperty('--color-accent');
+      document.documentElement.style.removeProperty('--color-accent-dark');
+      document.documentElement.style.removeProperty('--color-up');
+      document.documentElement.style.removeProperty('--color-down');
+      document.documentElement.style.removeProperty('--color-theme');
+      const meta = document.querySelector('meta[name="theme-color"]');
+      meta?.setAttribute('content', defaultAppearance.brand);
+      // Re-apply dark-mode defaults for up/down when needed
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.style.setProperty('--color-up', '#4ade98');
+        document.documentElement.style.setProperty('--color-down', '#ff9a8c');
+      }
+    });
+
+    // Keep key referenced for tree-shaking clarity in builds that strip unused imports.
+    void APPEARANCE_STORAGE_KEY;
+  }
+</script>

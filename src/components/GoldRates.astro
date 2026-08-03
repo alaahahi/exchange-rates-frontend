@@ -1,0 +1,64 @@
+---
+import type { GoldRate } from '../lib/api/types';
+import { formatDecimal, formatInteger, formatPercentChange } from '../lib/format';
+import { changeDirection } from '../lib/appearance';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  rates: GoldRate[];
+  lang?: Lang;
+}
+
+const { rates, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+
+function formatPrice(value: number): string {
+  return value >= 1000 ? formatInteger(value) : formatDecimal(value, 2);
+}
+
+function unitLabel(unit: string): string {
+  if (unit === 'gram') return t('perGram');
+  if (unit === 'ounce') return t('perOunce');
+  return unit;
+}
+
+function changeClass(change: number | null): string {
+  return `rate-change rate-change--${changeDirection(change)}`;
+}
+---
+
+<section class="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] shadow-sm" aria-labelledby="gold-heading">
+  <div class="flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[linear-gradient(90deg,var(--color-navy),var(--color-navy-soft))] px-4 py-3 text-white">
+    <div>
+      <h2 id="gold-heading" class="m-0 text-base font-bold sm:text-lg">{t('goldTitle')}</h2>
+      <p class="m-0 mt-0.5 text-xs text-white/70">{t('goldSubtitle')}</p>
+    </div>
+    <span class="rounded-full bg-[var(--color-gold)] px-2.5 py-1 text-xs font-bold text-[var(--color-navy)]">Gold</span>
+  </div>
+  <ul class="m-0 grid list-none gap-0 divide-y divide-[var(--color-line)] p-0">
+    {
+      rates.map((rate) => (
+        <li class="px-4 py-3.5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="m-0 font-bold text-[var(--color-ink)]">{rate.name}</p>
+              <p class="m-0 mt-0.5 text-xs text-[var(--color-muted)]">{unitLabel(rate.unit)}</p>
+            </div>
+            <span class={changeClass(rate.change)} data-change-dir={changeDirection(rate.change)}>{formatPercentChange(rate.change)}</span>
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <div class="rounded-xl bg-[var(--color-soft)] px-3 py-2">
+              <p class="m-0 text-[11px] text-[var(--color-muted)]">{t('buy')}</p>
+              <p class="rate-buy m-0 mt-1 text-base font-bold tabular-nums">{formatPrice(rate.buy)}</p>
+            </div>
+            <div class="rounded-xl bg-[var(--color-soft)] px-3 py-2">
+              <p class="m-0 text-[11px] text-[var(--color-muted)]">{t('sell')}</p>
+              <p class="rate-sell m-0 mt-1 text-base font-bold tabular-nums">{formatPrice(rate.sell)}</p>
+            </div>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</section>

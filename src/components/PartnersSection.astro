@@ -1,0 +1,60 @@
+---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+
+const partners = [
+  {
+    name: 'Qi Card',
+    href: 'https://qi.iq/ar/home',
+    logo: '/partner/unnamed.png',
+  },
+  {
+    name: 'Central Bank of Iraq',
+    href: 'https://www.cbi.iq/',
+    logo: '/partner/BANK.jpg',
+  },
+  {
+    name: 'FIB',
+    href: 'https://fib.iq/',
+    logo: '/partner/FIB.png',
+  },
+];
+---
+
+<section class="page-chrome rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-4 shadow-sm" aria-labelledby="partners-heading">
+  <h2 id="partners-heading" class="m-0 mb-3 text-center text-base font-bold text-[var(--color-ink)]">
+    {t('partnersTitle')}
+  </h2>
+  <ul class="m-0 flex list-none flex-wrap items-center justify-center gap-3 p-0 sm:gap-4">
+    {
+      partners.map((partner) => (
+        <li>
+          <a
+            href={partner.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex h-16 w-28 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-2 transition hover:border-[var(--color-gold)] hover:bg-[var(--color-soft-gold)] sm:h-20 sm:w-36"
+            aria-label={`${partner.name} — ${t('opensNewTab')}`}
+          >
+            <img
+              src={partner.logo}
+              alt={partner.name}
+              width="120"
+              height="48"
+              class="max-h-12 w-auto max-w-full rounded-[5px] border border-white object-contain sm:max-h-14"
+              loading="lazy"
+              decoding="async"
+            />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>

@@ -1,0 +1,179 @@
+---
+import type { ExchangeRate } from '../lib/api/types';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  rates: ExchangeRate[];
+  lang?: Lang;
+}
+
+const { rates, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+
+const converterRates: ExchangeRate[] = [
+  ...rates.filter((rate) => rate.currency !== 'IQD'),
+  {
+    currency: 'IQD',
+    name: t('iqd'),
+    buy: 1,
+    sell: 1,
+    quote_unit: 1,
+    change: 0,
+    updated_at: null,
+  },
+];
+
+const payload = converterRates.map((rate) => ({
+  currency: rate.currency,
+  name: rate.name,
+  buy: rate.buy,
+  sell: rate.sell,
+  quote_unit: rate.quote_unit ?? (rate.currency === 'IQD' ? 1 : 100),
+}));
+
+const defaultFrom = converterRates.find((r) => r.currency === 'USD')?.currency ?? converterRates[0]?.currency ?? 'USD';
+const defaultTo = 'IQD';
+const buyLabel = t('buy');
+const sellLabel = t('sell');
+---
+
+<section
+  id="converter"
+  class="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] shadow-sm"
+  aria-labelledby="converter-heading"
+  data-rates={JSON.stringify(payload)}
+  data-buy-label={buyLabel}
+  data-sell-label={sellLabel}
+>
+  <div class="flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[#0d2149] px-4 py-3 text-white brand-panel">
+    <div>
+      <h2 id="converter-heading" class="m-0 text-base font-bold sm:text-lg">{t('converterTitle')}</h2>
+      <p class="m-0 mt-0.5 text-xs text-white/70">{t('converterSubtitle')}</p>
+    </div>
+    <div class="inline-flex rounded-xl bg-white/10 p-1" role="group">
+      <button type="button" class="converter-mode is-active min-h-10 rounded-lg px-3 text-sm font-semibold transition" data-mode="buy" aria-pressed="true">{buyLabel}</button>
+      <button type="button" class="converter-mode min-h-10 rounded-lg px-3 text-sm font-semibold text-white/80 transition" data-mode="sell" aria-pressed="false">{sellLabel}</button>
+    </div>
+  </div>
+
+  <div class="space-y-3 p-4">
+    <label class="block">
+      <span class="mb-1.5 block text-sm font-medium text-[var(--color-muted)]">{t('amount')}</span>
+      <div class="flex min-h-12 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] focus-within:border-[var(--color-gold)]">
+        <select id="from-currency" class="min-w-[6.5rem] border-e border-[var(--color-line)] bg-[var(--color-soft)] px-2 text-sm font-bold text-[var(--color-ink)]" aria-label={t('fromCurrency')}>
+          {converterRates.map((rate) => <option value={rate.currency} selected={rate.currency === defaultFrom}>{rate.currency}</option>)}
+        </select>
+        <input id="from-amount" type="number" inputmode="decimal" min="0" step="any" value="100" class="w-full min-w-0 border-0 bg-transparent px-3 text-lg font-bold tabular-nums text-[var(--color-ink)] outline-none" aria-label={t('amount')} />
+      </div>
+    </label>
+
+    <div class="flex justify-center">
+      <button type="button" id="swap-currencies" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-card)] text-[var(--color-ink)] shadow-sm transition hover:border-[var(--color-gold)]" aria-label={t('swap')}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 7h11l-2.5-2.5M17 17H6l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </button>
+    </div>
+
+    <label class="block">
+      <span class="mb-1.5 block text-sm font-medium text-[var(--color-muted)]">{t('result')}</span>
+      <div class="flex min-h-12 overflow-hidden rounded-xl border border-[var(--color-gold)]/40 bg-[var(--color-soft-gold)]">
+        <select id="to-currency" class="min-w-[6.5rem] border-e border-[var(--color-line)] bg-[var(--color-soft-gold)] px-2 text-sm font-bold text-[var(--color-ink)]" aria-label={t('toCurrency')}>
+          {converterRates.map((rate) => <option value={rate.currency} selected={rate.currency === defaultTo}>{rate.currency}</option>)}
+        </select>
+        <output id="to-amount" class="flex w-full min-w-0 items-center px-3 text-lg font-bold tabular-nums text-[var(--color-ink)]" aria-live="polite">—</output>
+      </div>
+    </label>
+
+    <p id="converter-hint" class="m-0 text-xs leading-relaxed text-[var(--color-muted)]">{t('converterHint')}</p>
+  </div>
+</section>
+
+<style>
+  .converter-mode.is-active {
+    background: var(--color-gold);
+    color: var(--color-navy);
+  }
+</style>
+
+<script>
+  type RateRow = { currency: string; name: string; buy: number; sell: number; quote_unit: number };
+  const root = document.getElementById('converter');
+  if (root) {
+    let rates: RateRow[] = JSON.parse(root.getAttribute('data-rates') || '[]');
+    const buyLabel = root.getAttribute('data-buy-label') || 'Buy';
+    const sellLabel = root.getAttribute('data-sell-label') || 'Sell';
+    const fromSelect = document.getElementById('from-currency') as HTMLSelectElement | null;
+    const toSelect = document.getElementById('to-currency') as HTMLSelectElement | null;
+    const fromAmount = document.getElementById('from-amount') as HTMLInputElement | null;
+    const toAmount = document.getElementById('to-amount');
+    const hint = document.getElementById('converter-hint');
+    const swapBtn = document.getElementById('swap-currencies');
+    const modeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.converter-mode'));
+    let mode: 'buy' | 'sell' = 'buy';
+    const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4, useGrouping: false });
+
+    function getRate(code: string) {
+      return rates.find((rate) => rate.currency === code);
+    }
+    function priceOf(rate: RateRow) {
+      return mode === 'buy' ? rate.buy : rate.sell;
+    }
+    function perUnit(rate: RateRow) {
+      const board = priceOf(rate);
+      const unit = rate.quote_unit > 0 ? rate.quote_unit : rate.currency === 'IQD' ? 1 : 100;
+      return board / unit;
+    }
+    function convert() {
+      if (!fromSelect || !toSelect || !fromAmount || !toAmount) return;
+      const amount = Number(fromAmount.value);
+      const from = getRate(fromSelect.value);
+      const to = getRate(toSelect.value);
+      if (!from || !to || !Number.isFinite(amount) || amount < 0) {
+        toAmount.textContent = '—';
+        return;
+      }
+      const fromPrice = perUnit(from);
+      const toPrice = perUnit(to);
+      if (fromPrice <= 0 || toPrice <= 0) {
+        toAmount.textContent = '—';
+        return;
+      }
+      toAmount.textContent = formatter.format((amount * fromPrice) / toPrice);
+      if (hint) {
+        hint.textContent = `1 ${from.currency} ≈ ${formatter.format(fromPrice / toPrice)} ${to.currency} (${mode === 'buy' ? buyLabel : sellLabel})`;
+      }
+    }
+
+    window.addEventListener('rates:updated', ((event: CustomEvent<{ rates: RateRow[] }>) => {
+      if (Array.isArray(event.detail?.rates)) {
+        rates = event.detail.rates;
+        convert();
+      }
+    }) as EventListener);
+
+    modeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        mode = button.dataset.mode === 'sell' ? 'sell' : 'buy';
+        modeButtons.forEach((item) => {
+          const active = item.dataset.mode === mode;
+          item.classList.toggle('is-active', active);
+          item.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        convert();
+      });
+    });
+
+    swapBtn?.addEventListener('click', () => {
+      if (!fromSelect || !toSelect) return;
+      const previous = fromSelect.value;
+      fromSelect.value = toSelect.value;
+      toSelect.value = previous;
+      convert();
+    });
+
+    fromSelect?.addEventListener('change', convert);
+    toSelect?.addEventListener('change', convert);
+    fromAmount?.addEventListener('input', convert);
+    convert();
+  }
+</script>

@@ -1,0 +1,61 @@
+---
+import type { ExchangeRate } from '../lib/api/types';
+import { formatInteger } from '../lib/format';
+import { unitPrice } from '../lib/rates';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  usd: ExchangeRate;
+  lang?: Lang;
+}
+
+const { usd, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+const sellPerDollar = unitPrice(usd.sell, 'USD', usd.quote_unit);
+const presets = [100, 500, 1000, 5000].map((amount) => ({
+  amount,
+  iqd: amount * sellPerDollar,
+}));
+---
+
+<section class="page-chrome rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-4 shadow-sm">
+  <div class="mb-3 flex items-center justify-between gap-2">
+    <h2 class="m-0 text-base font-bold text-[var(--color-ink)]">{t('quickUsdTitle')}</h2>
+    <span class="text-xs text-[var(--color-muted)]">{t('quickUsdHint')}</span>
+  </div>
+  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    {
+      presets.map((item) => (
+        <button
+          type="button"
+          class="quick-usd-chip rounded-xl border border-[var(--color-line)] bg-[var(--color-soft)] px-3 py-3 text-start transition hover:border-[var(--color-gold)] hover:bg-[var(--color-soft-gold)]"
+          data-amount={item.amount}
+        >
+          <span class="block text-xs text-[var(--color-muted)]">{item.amount} USD</span>
+          <span class="mt-1 block text-base font-bold tabular-nums text-[var(--color-ink)]" data-usd-preset={item.amount}>{formatInteger(item.iqd)}</span>
+          <span class="mt-0.5 block text-[11px] text-[var(--color-muted)]">{t('approxIqd')}</span>
+        </button>
+      ))
+    }
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.quick-usd-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const amount = chip.dataset.amount || '100';
+      const fromAmount = document.getElementById('from-amount') as HTMLInputElement | null;
+      const fromCurrency = document.getElementById('from-currency') as HTMLSelectElement | null;
+      const toCurrency = document.getElementById('to-currency') as HTMLSelectElement | null;
+      const focusBtn = document.querySelector<HTMLButtonElement>('.section-nav-btn[data-focus="converter"]');
+      if (fromCurrency) fromCurrency.value = 'USD';
+      if (toCurrency) toCurrency.value = 'IQD';
+      if (fromAmount) {
+        fromAmount.value = amount;
+        fromAmount.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      focusBtn?.click();
+    });
+  });
+</script>

@@ -1,0 +1,152 @@
+---
+import type { Lang } from '../i18n/ui';
+import { getPromoMessages, type PromoMessage } from '../lib/promoMessages';
+
+interface Props {
+  lang?: Lang;
+  /** Optional override — useful when messages come from the API later. */
+  messages?: PromoMessage[];
+}
+
+const { lang = 'ar', messages } = Astro.props;
+const items = (messages ?? getPromoMessages(lang)).map((item) => item.text).filter(Boolean);
+
+if (items.length === 0) {
+  return;
+}
+
+const track = [...items, ...items];
+---
+
+<div class="promo-marquee page-chrome" aria-label="Announcements">
+  <div class="promo-marquee__fade promo-marquee__fade--start" aria-hidden="true"></div>
+  <div class="promo-marquee__fade promo-marquee__fade--end" aria-hidden="true"></div>
+  <div class="promo-marquee__viewport">
+    <div class="promo-marquee__track">
+      {
+        track.map((text, index) => (
+          <span class="promo-marquee__item">
+            <span class="promo-marquee__dot" aria-hidden="true"></span>
+            <span>{text}</span>
+            {index < track.length - 1 && <span class="promo-marquee__sep" aria-hidden="true">✦</span>}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .promo-marquee {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(194, 153, 83, 0.28);
+    background: linear-gradient(90deg, #081530 0%, #0d2149 45%, #122a55 100%);
+    color: #f0d9a6;
+  }
+
+  .promo-marquee__viewport {
+    overflow: hidden;
+    padding-block: 0.55rem;
+  }
+
+  .promo-marquee__track {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    animation: promo-scroll 42s linear infinite;
+  }
+
+  .promo-marquee__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding-inline: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .promo-marquee__dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: #c29953;
+    box-shadow: 0 0 0 3px rgba(194, 153, 83, 0.18);
+    flex-shrink: 0;
+  }
+
+  .promo-marquee__sep {
+    margin-inline-start: 0.85rem;
+    color: rgba(240, 217, 166, 0.35);
+    font-size: 0.7rem;
+  }
+
+  .promo-marquee__fade {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2.5rem;
+    z-index: 1;
+  }
+
+  .promo-marquee__fade--start {
+    inset-inline-start: 0;
+    background: linear-gradient(to left, transparent, #081530);
+  }
+
+  .promo-marquee__fade--end {
+    inset-inline-end: 0;
+    background: linear-gradient(to right, transparent, #0d2149);
+  }
+
+  html[dir='rtl'] .promo-marquee__track {
+    animation-name: promo-scroll-rtl;
+  }
+
+  @keyframes promo-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes promo-scroll-rtl {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(50%);
+    }
+  }
+
+  .promo-marquee:hover .promo-marquee__track {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .promo-marquee__track {
+      animation: none;
+      max-width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: 0.35rem;
+      white-space: normal;
+      width: 100%;
+      padding-inline: 1rem;
+    }
+
+    .promo-marquee__item:nth-child(n + 4) {
+      display: none;
+    }
+
+    .promo-marquee__sep {
+      display: none;
+    }
+  }
+</style>

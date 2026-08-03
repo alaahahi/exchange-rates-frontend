@@ -1,0 +1,179 @@
+---
+interface Props {
+  apiUrl?: string;
+  intervalMs?: number;
+}
+
+const apiUrl = (Astro.props.apiUrl ?? import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const intervalMs = Astro.props.intervalMs ?? 30000;
+---
+
+{
+  apiUrl && (
+    <div
+      id="rates-auto-refresh"
+      class="hidden"
+      data-api-url={apiUrl}
+      data-interval={String(intervalMs)}
+      aria-hidden="true"
+    />
+  )
+}
+
+<script>
+  type RateRow = {
+    currency: string;
+    name: string;
+    buy: number;
+    sell: number;
+    quote_unit?: number;
+    change: number | null;
+    updated_at?: string | null;
+  };
+
+  const root = document.getElementById('rates-auto-refresh');
+  if (!root) {
+    // no-op
+  } else {
+    const apiUrl = root.dataset.apiUrl || '';
+    const intervalMs = Number(root.dataset.interval || '30000');
+    let timer: number | null = null;
+    let inFlight = false;
+
+    const numberFmt = new Intl.NumberFormat('en-US', { useGrouping: false, maximumFractionDigits: 4 });
+    const intFmt = new Intl.NumberFormat('en-US', { useGrouping: false, maximumFractionDigits: 0 });
+
+    function formatValue(value: number | null, field: string): string {
+      if (field === 'change') {
+        if (value === null || Number.isNaN(value)) return '—';
+        const sign = value > 0 ? '+' : '';
+        return `${sign}${numberFmt.format(Number(value.toFixed(2)))}%`;
+      }
+      const num = Number(value ?? 0);
+      if (Math.abs(num) >= 100 || Number.isInteger(num)) return intFmt.format(num);
+      return numberFmt.format(num);
+    }
+
+    function setText(selector: string, value: string): void {
+      document.querySelectorAll(selector).forEach((el) => {
+        el.textContent = value;
+      });
+    }
+
+    function applyRates(rates: RateRow[]): void {
+      const byCode = new Map(rates.map((rate) => [rate.currency, rate]));
+
+      document.querySelectorAll<HTMLElement>('[data-rate][data-field]').forEach((el) => {
+        const code = el.dataset.rate;
+        const field = el.dataset.field;
+        if (!code || !field) return;
+        const rate = byCode.get(code);
+        if (!rate) return;
+
+        if (field === 'buy') el.textContent = formatValue(rate.buy, field);
+        if (field === 'sell') el.textContent = formatValue(rate.sell, field);
+        if (field === 'change') {
+          el.textContent = formatValue(rate.change, field);
+          const dir =
+            rate.change === null || Number.isNaN(rate.change) || rate.change === 0
+              ? 'flat'
+              : rate.change > 0
+                ? 'up'
+                : 'down';
+          el.dataset.changeDir = dir;
+          el.classList.remove('rate-change--up', 'rate-change--down', 'rate-change--flat');
+          if (el.classList.contains('rate-change')) {
+            el.classList.add(`rate-change--${dir}`);
+          }
+        }
+        if (field === 'spread') el.textContent = formatValue(Math.max(0, rate.sell - rate.buy), 'buy');
+      });
+
+      const usd = byCode.get('USD');
+      if (usd) {
+        const quoteUnit = usd.quote_unit && usd.quote_unit > 0 ? usd.quote_unit : 100;
+        const sellPerUnit = usd.sell / quoteUnit;
+        document.querySelectorAll<HTMLElement>('[data-usd-preset]').forEach((el) => {
+          const amount = Number(el.dataset.usdPreset || '0');
+          if (!Number.isFinite(amount)) return;
+          el.textContent = intFmt.format(amount * sellPerUnit);
+        });
+      }
+
+      const converter = document.getElementById('converter');
+      if (converter) {
+        const existing: RateRow[] = JSON.parse(converter.getAttribute('data-rates') || '[]');
+        const iqd = existing.find((row) => row.currency === 'IQD') ?? {
+          currency: 'IQD',
+          name: 'IQD',
+          buy: 1,
+          sell: 1,
+          quote_unit: 1,
+          change: 0,
+        };
+        const next = [
+          ...rates.map((rate) => ({
+            currency: rate.currency,
+            name: rate.name,
+            buy: rate.buy,
+            sell: rate.sell,
+            quote_unit: rate.quote_unit ?? 100,
+          })),
+          iqd,
+        ];
+        converter.setAttribute('data-rates', JSON.stringify(next));
+        // Refresh in-memory converter rates by reloading script state via custom event
+        window.dispatchEvent(new CustomEvent('rates:updated', { detail: { rates: next } }));
+        const fromAmount = document.getElementById('from-amount');
+        fromAmount?.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const updatedAt = rates.find((rate) => rate.updated_at)?.updated_at;
+      if (updatedAt) {
+        const label = new Intl.DateTimeFormat('en-GB', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+          timeZone: 'Asia/Baghdad',
+          numberingSystem: 'latn',
+        }).format(new Date(updatedAt));
+        setText('[data-rate-updated]', label);
+      }
+    }
+
+    async function poll(): Promise<void> {
+      if (!apiUrl || inFlight) return;
+      if (document.visibilityState !== 'visible') return;
+
+      inFlight = true;
+
+      try {
+        const response = await fetch(`${apiUrl}/exchange-rates`, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        const body = await response.json();
+        if (!response.ok || !body?.success || !Array.isArray(body.data)) {
+          throw new Error('bad response');
+        }
+        applyRates(body.data as RateRow[]);
+      } catch {
+        // Keep last known prices on network errors.
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    function start(): void {
+      if (timer !== null) window.clearInterval(timer);
+      timer = window.setInterval(() => {
+        void poll();
+      }, Number.isFinite(intervalMs) && intervalMs > 0 ? intervalMs : 30000);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void poll();
+    });
+
+    start();
+  }
+</script>

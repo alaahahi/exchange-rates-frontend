@@ -1,0 +1,38 @@
+---
+import type { ExchangeRate } from '../lib/api/types';
+import { formatDecimal, formatPercentChange } from '../lib/format';
+import { changeDirection } from '../lib/appearance';
+
+interface Props {
+  rates: ExchangeRate[];
+}
+
+const { rates } = Astro.props;
+
+function changeClass(change: number | null): string {
+  return `rate-change rate-change--${changeDirection(change)}`;
+}
+
+const tickerRates = [
+  ...rates.filter((rate) => rate.currency === 'USD'),
+  ...rates.filter((rate) => rate.currency !== 'USD' && rate.currency !== 'IQD'),
+].slice(0, 8);
+---
+
+{
+  tickerRates.length > 0 && (
+    <div class="border-b border-white/10 bg-[var(--color-navy-soft)]" aria-label="شريط الأسعار السريع">
+      <div class="ticker-scroll mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-2.5 sm:px-6">
+        {tickerRates.map((rate) => (
+          <div class="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white">
+            <span class="font-bold text-[var(--color-gold-soft)]">{rate.currency}</span>
+            <span class="tabular-nums text-white/90" data-rate={rate.currency} data-field="sell">{formatDecimal(rate.sell, 2)}</span>
+            <span class={changeClass(rate.change)} data-rate={rate.currency} data-field="change" data-change-dir={changeDirection(rate.change)}>
+              {formatPercentChange(rate.change)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

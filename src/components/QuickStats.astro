@@ -1,0 +1,42 @@
+---
+import type { ExchangeRate, GoldRate, MarketSummary } from '../lib/api/types';
+import { formatInteger } from '../lib/format';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  usd: ExchangeRate | null;
+  ratesCount: number;
+  goldCount: number;
+  market: MarketSummary | null;
+  goldHighlight?: GoldRate | null;
+  lang?: Lang;
+}
+
+const { usd, ratesCount, goldCount, market, goldHighlight = null, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section class="page-chrome grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Quick summary">
+  <div class="rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-3 shadow-sm">
+    <p class="m-0 text-[11px] font-medium text-[var(--color-muted)]">{t('quickStatsSell')}</p>
+    <p class="rate-sell m-0 mt-1 text-xl font-bold tabular-nums" data-rate="USD" data-field="sell">{usd ? formatInteger(usd.sell) : '—'}</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-3 shadow-sm">
+    <p class="m-0 text-[11px] font-medium text-[var(--color-muted)]">{t('quickStatsBuy')}</p>
+    <p class="rate-buy m-0 mt-1 text-xl font-bold tabular-nums" data-rate="USD" data-field="buy">{usd ? formatInteger(usd.buy) : '—'}</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--color-gold)]/30 bg-[var(--color-soft-gold)] p-3 shadow-sm">
+    <p class="m-0 text-[11px] font-medium text-[var(--color-gold-dark)]">{t('quickStatsSpread')}</p>
+    <p class="m-0 mt-1 text-xl font-bold tabular-nums text-[var(--color-ink)]" data-rate="USD" data-field="spread">{usd ? formatInteger(Math.max(0, usd.sell - usd.buy)) : '—'}</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-3 shadow-sm">
+    <p class="m-0 text-[11px] font-medium text-[var(--color-muted)]">{t('quickStatsCoverage')}</p>
+    <p class="m-0 mt-1 text-sm font-bold text-[var(--color-ink)]">
+      {ratesCount} {t('currenciesCount')}
+      {goldCount > 0 && <span class="text-[var(--color-muted)]"> · {goldCount} {t('goldCount')}</span>}
+    </p>
+    {goldHighlight && <p class="m-0 mt-1 text-xs text-[var(--color-muted)]">{goldHighlight.name}: {formatInteger(goldHighlight.sell)}</p>}
+    {market && <p class="m-0 mt-1 text-xs font-semibold text-[var(--color-ink)]">{market.status_label}</p>}
+  </div>
+</section>

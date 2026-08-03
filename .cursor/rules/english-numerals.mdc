@@ -1,0 +1,13 @@
+---
+description: Always display numbers with English/Latin digits (0-9), never Arabic-Indic numerals
+alwaysApply: true
+---
+
+# English Numerals (Latin Digits)
+
+All numeric display must use **English/Latin digits** (`0-9`), never Arabic-Indic digits (`٠-٩`).
+
+- Prefer `src/lib/format.ts` helpers.
+- Never use `Intl.NumberFormat('ar-IQ')` or `'ar'` for numbers.
+- Use `en-US` / `en-GB` or `numberingSystem: 'latn'`.
+- No thousand separators: `150000` not `150,000` (`useGrouping: false`).

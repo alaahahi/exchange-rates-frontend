@@ -1,54 +1,94 @@
 ---
 import type { ExchangeRate } from '../lib/api/types';
+import { formatDecimal, formatPercentChange } from '../lib/format';
+import { changeDirection } from '../lib/appearance';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
 
 interface Props {
   rates: ExchangeRate[];
+  lang?: Lang;
 }
 
-const { rates } = Astro.props;
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('ar-IQ', {
-    maximumFractionDigits: 4,
-  }).format(value);
-}
-
-function formatChange(change: number | null): string {
-  if (change === null || Number.isNaN(change)) return '—';
-  const sign = change > 0 ? '+' : '';
-  return `${sign}${formatNumber(change)}%`;
-}
+const { rates, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
 
 function changeClass(change: number | null): string {
-  if (change === null || change === 0) return 'text-[var(--color-muted)]';
-  return change > 0 ? 'text-[var(--color-up)]' : 'text-[var(--color-down)]';
+  const dir = changeDirection(change);
+  return `rate-change rate-change--${dir}`;
+}
+
+function avatarTone(code: string): string {
+  const tones = [
+    'from-[var(--color-navy)] to-[var(--color-navy-soft)]',
+    'from-[var(--color-gold-dark)] to-[var(--color-gold)]',
+    'from-[var(--color-navy-soft)] to-[var(--color-navy)]',
+    'from-[var(--color-accent-dark)] to-[var(--color-accent)]',
+  ];
+  return tones[code.charCodeAt(0) % tones.length];
 }
 ---
 
-{/* Desktop / tablet table */}
-<div class="hidden overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] shadow-sm md:block">
-  <table class="w-full border-collapse text-sm" aria-label="جدول أسعار صرف العملات">
-    <thead class="bg-[var(--color-navy)] text-white">
+<ul class="m-0 grid list-none gap-3 p-0 lg:hidden" aria-label={t('otherCurrencies')}>
+  {
+    rates.map((rate) => (
+      <li class="rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-3.5 shadow-sm">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class:list={['flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white', avatarTone(rate.currency)]} aria-hidden="true">
+              {rate.currency.slice(0, 2)}
+            </span>
+            <div>
+              <p class="m-0 text-base font-bold text-[var(--color-ink)]">{rate.currency}</p>
+              <p class="m-0 text-sm text-[var(--color-muted)]">{rate.name}</p>
+            </div>
+          </div>
+          <span class={changeClass(rate.change)} data-rate={rate.currency} data-field="change" data-change-dir={changeDirection(rate.change)}>{formatPercentChange(rate.change)}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="rounded-xl bg-[var(--color-soft)] px-3 py-2">
+            <p class="m-0 text-xs text-[var(--color-muted)]">{t('buy')}</p>
+            <p class="rate-buy m-0 mt-1 text-base font-bold tabular-nums" data-rate={rate.currency} data-field="buy">{formatDecimal(rate.buy)}</p>
+          </div>
+          <div class="rounded-xl bg-[var(--color-soft)] px-3 py-2">
+            <p class="m-0 text-xs text-[var(--color-muted)]">{t('sell')}</p>
+            <p class="rate-sell m-0 mt-1 text-base font-bold tabular-nums" data-rate={rate.currency} data-field="sell">{formatDecimal(rate.sell)}</p>
+          </div>
+        </div>
+      </li>
+    ))
+  }
+</ul>
+
+<div class="hidden overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] shadow-sm lg:block">
+  <table class="w-full border-collapse text-sm" aria-label={t('otherCurrencies')}>
+    <thead class="bg-[var(--color-navy)] text-white brand-panel">
       <tr>
-        <th scope="col" class="px-4 py-3 text-right font-semibold">العملة</th>
-        <th scope="col" class="px-4 py-3 text-right font-semibold">الاسم</th>
-        <th scope="col" class="px-4 py-3 text-right font-semibold">شراء</th>
-        <th scope="col" class="px-4 py-3 text-right font-semibold">بيع</th>
-        <th scope="col" class="px-4 py-3 text-right font-semibold">التغير</th>
+        <th scope="col" class="px-4 py-3 text-start font-semibold">{t('currency')}</th>
+        <th scope="col" class="px-4 py-3 text-start font-semibold">{t('buy')}</th>
+        <th scope="col" class="px-4 py-3 text-start font-semibold">{t('sell')}</th>
+        <th scope="col" class="px-4 py-3 text-start font-semibold">{t('change')}</th>
       </tr>
     </thead>
     <tbody>
       {
         rates.map((rate) => (
-          <tr class="border-t border-[var(--color-line)] odd:bg-white even:bg-[#f7f8fb]">
-            <th scope="row" class="px-4 py-3 text-right font-bold tracking-wide text-[var(--color-navy)]">
-              {rate.currency}
+          <tr class="border-t border-[var(--color-line)] bg-[var(--color-card)] text-[var(--color-ink)] transition hover:bg-[var(--color-soft)]">
+            <th scope="row" class="px-4 py-3.5 text-start">
+              <div class="flex items-center gap-3">
+                <span class:list={['flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-bold text-white', avatarTone(rate.currency)]} aria-hidden="true">
+                  {rate.currency.slice(0, 2)}
+                </span>
+                <span>
+                  <span class="block font-bold text-[var(--color-ink)]">{rate.currency}</span>
+                  <span class="block text-xs font-normal text-[var(--color-muted)]">{rate.name}</span>
+                </span>
+              </div>
             </th>
-            <td class="px-4 py-3 text-right text-[var(--color-muted)]">{rate.name}</td>
-            <td class="px-4 py-3 text-right font-semibold tabular-nums">{formatNumber(rate.buy)}</td>
-            <td class="px-4 py-3 text-right font-semibold tabular-nums">{formatNumber(rate.sell)}</td>
-            <td class:list={['px-4 py-3 text-right font-semibold tabular-nums', changeClass(rate.change)]}>
-              {formatChange(rate.change)}
+            <td class="rate-buy px-4 py-3.5 text-start font-semibold tabular-nums" data-rate={rate.currency} data-field="buy">{formatDecimal(rate.buy)}</td>
+            <td class="rate-sell px-4 py-3.5 text-start font-semibold tabular-nums" data-rate={rate.currency} data-field="sell">{formatDecimal(rate.sell)}</td>
+            <td class="px-4 py-3.5 text-start">
+              <span class={changeClass(rate.change)} data-rate={rate.currency} data-field="change" data-change-dir={changeDirection(rate.change)}>{formatPercentChange(rate.change)}</span>
             </td>
           </tr>
         ))
@@ -56,32 +96,3 @@ function changeClass(change: number | null): string {
     </tbody>
   </table>
 </div>
-
-{/* Mobile cards */}
-<ul class="m-0 grid list-none gap-3 p-0 md:hidden" aria-label="أسعار صرف العملات">
-  {
-    rates.map((rate) => (
-      <li class="rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-4 shadow-sm">
-        <div class="mb-3 flex items-baseline justify-between gap-3">
-          <div>
-            <p class="m-0 text-lg font-bold tracking-wide text-[var(--color-navy)]">{rate.currency}</p>
-            <p class="m-0 text-sm text-[var(--color-muted)]">{rate.name}</p>
-          </div>
-          <p class:list={['m-0 text-sm font-semibold', changeClass(rate.change)]}>
-            {formatChange(rate.change)}
-          </p>
-        </div>
-        <dl class="m-0 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <dt class="text-[var(--color-muted)]">شراء</dt>
-            <dd class="m-0 mt-1 text-base font-bold tabular-nums">{formatNumber(rate.buy)}</dd>
-          </div>
-          <div>
-            <dt class="text-[var(--color-muted)]">بيع</dt>
-            <dd class="m-0 mt-1 text-base font-bold tabular-nums">{formatNumber(rate.sell)}</dd>
-          </div>
-        </dl>
-      </li>
-    ))
-  }
-</ul>

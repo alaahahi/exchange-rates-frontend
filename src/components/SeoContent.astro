@@ -1,0 +1,39 @@
+---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+
+const blocks = [
+  { title: t('seoIraqTitle'), body: t('seoIraqBody') },
+  { title: t('seoGoldTitle'), body: t('seoGoldBody') },
+  { title: t('seoCbiTitle'), body: t('seoCbiBody') },
+];
+---
+
+<section class="page-chrome space-y-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-4 shadow-sm sm:p-5" aria-labelledby="seo-guide-heading">
+  <h2 id="seo-guide-heading" class="m-0 text-lg font-bold text-[var(--color-ink)]">
+    {t('seoIraqTitle')}
+  </h2>
+  <div class="space-y-4">
+    {
+      blocks.map((block, index) => (
+        <article>
+          {index === 0 ? (
+            <p class="m-0 text-sm leading-relaxed text-[var(--color-muted)]">{block.body}</p>
+          ) : (
+            <>
+              <h3 class="m-0 text-base font-bold text-[var(--color-ink)]">{block.title}</h3>
+              <p class="m-0 mt-2 text-sm leading-relaxed text-[var(--color-muted)]">{block.body}</p>
+            </>
+          )}
+        </article>
+      ))
+    }
+  </div>
+</section>

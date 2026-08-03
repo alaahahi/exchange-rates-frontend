@@ -1,0 +1,278 @@
+---
+import Layout from '../layouts/Layout.astro';
+import UsdHero from '../components/UsdHero.astro';
+import ExchangeRatesTable from '../components/ExchangeRatesTable.astro';
+import CurrencyConverter from '../components/CurrencyConverter.astro';
+import RatesTicker from '../components/RatesTicker.astro';
+import StatusMessage from '../components/StatusMessage.astro';
+import MarketStatus from '../components/MarketStatus.astro';
+import GoldRates from '../components/GoldRates.astro';
+import Header from '../components/Header.astro';
+import QuickStats from '../components/QuickStats.astro';
+import QuickUsdPresets from '../components/QuickUsdPresets.astro';
+import InsightCards from '../components/InsightCards.astro';
+import FaqSection from '../components/FaqSection.astro';
+import WeatherCard from '../components/WeatherCard.astro';
+import PartnersSection from '../components/PartnersSection.astro';
+import RatesAutoRefresh from '../components/RatesAutoRefresh.astro';
+import SeoContent from '../components/SeoContent.astro';
+import { siteConfig } from '../config/site';
+import { getExchangeRates } from '../lib/api/exchangeRates';
+import { getGoldRates } from '../lib/api/goldRates';
+import { getMarketSummary } from '../lib/api/marketSummary';
+import { ApiError } from '../lib/api/errors';
+import type { ExchangeRate, GoldRate, MarketSummary } from '../lib/api/types';
+import type { Lang } from '../i18n/ui';
+import { ui, currencyNamesEn, currencyNamesKu, goldNamesEn, goldNamesKu } from '../i18n/ui';
+import { useTranslations, alternateUrls } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const dict = ui[lang];
+
+let rates: ExchangeRate[] = [];
+let goldRates: GoldRate[] = [];
+let marketSummary: MarketSummary | null = null;
+let errorMessage: string | null = null;
+
+try {
+  const fetchInit = { headers: { 'Cache-Control': 'no-cache' } };
+  const [exchangeResult, goldResult, marketResult] = await Promise.allSettled([
+    getExchangeRates(fetchInit),
+    getGoldRates(fetchInit),
+    getMarketSummary(fetchInit),
+  ]);
+
+  if (exchangeResult.status === 'fulfilled') {
+    rates = exchangeResult.value;
+  } else {
+    throw exchangeResult.reason;
+  }
+
+  if (goldResult.status === 'fulfilled') {
+    goldRates = goldResult.value;
+  }
+
+  if (marketResult.status === 'fulfilled') {
+    marketSummary = marketResult.value;
+  }
+} catch (error) {
+  errorMessage = error instanceof ApiError ? error.message : t('loadError');
+}
+
+if (lang === 'en' || lang === 'ku') {
+  const currencyNames = lang === 'en' ? currencyNamesEn : currencyNamesKu;
+  const goldNames = lang === 'en' ? goldNamesEn : goldNamesKu;
+  rates = rates.map((rate) => ({
+    ...rate,
+    name: currencyNames[rate.currency] ?? rate.name,
+  }));
+  goldRates = goldRates.map((rate) => ({
+    ...rate,
+    name: goldNames[rate.code] ?? rate.name,
+  }));
+  if (marketSummary) {
+    marketSummary = {
+      ...marketSummary,
+      status_label: marketSummary.is_open ? t('marketOpen') : t('marketClosed'),
+    };
+  }
+}
+
+const usdRate = rates.find((rate) => rate.currency === 'USD') ?? null;
+const otherRates = rates.filter((rate) => rate.currency !== 'USD' && rate.currency !== 'IQD');
+const goldHighlight = goldRates.find((rate) => rate.code === 'GOLD_21K') ?? goldRates[0] ?? null;
+
+const latestUpdate =
+  usdRate?.updated_at ??
+  rates
+    .map((rate) => rate.updated_at)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1) ??
+  null;
+
+const pageTitle = usdRate
+  ? dict.titleWithPrice(Math.round(usdRate.sell))
+  : t('titleFallback');
+
+const pageDescription = usdRate
+  ? dict.descriptionWithPrice(Math.round(usdRate.buy), Math.round(usdRate.sell))
+  : t('descriptionFallback');
+
+const alternates = alternateUrls(siteConfig.url);
+const canonical = alternates[lang];
+const htmlLang = lang === 'ku' ? 'ckb' : lang;
+
+const faqEntities = [1, 2, 3, 4, 5].map((n) => ({
+  '@type': 'Question',
+  name: t(`faq${n}q` as 'faq1q'),
+  acceptedAnswer: {
+    '@type': 'Answer',
+    text: t(`faq${n}a` as 'faq1a'),
+  },
+}));
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteConfig.name,
+    alternateName: ['dinar-now', 'سعر الصرف في العراق الآن', 'Iraq exchange rate now'],
+    url: siteConfig.url,
+    description: pageDescription,
+    inLanguage: [htmlLang, 'ar', 'en', 'ckb'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: pageTitle,
+    description: pageDescription,
+    url: canonical,
+    inLanguage: htmlLang,
+    isPartOf: { '@type': 'WebSite', name: siteConfig.name, url: siteConfig.url },
+    about: [
+      { '@type': 'Thing', name: 'Iraqi Dinar exchange rate' },
+      { '@type': 'Thing', name: 'Gold price Iraq' },
+      { '@type': 'Organization', name: 'Central Bank of Iraq', url: 'https://www.cbi.iq/' },
+    ],
+    dateModified: latestUpdate ?? undefined,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: new URL('/logo.png', siteConfig.url).toString(),
+    sameAs: ['https://www.cbi.iq/', 'https://qi.iq/ar/home', 'https://fib.iq/'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqEntities,
+  },
+  ...(usdRate
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Dataset',
+          name: pageTitle,
+          description: pageDescription,
+          url: canonical,
+          creator: { '@type': 'Organization', name: siteConfig.name },
+          temporalCoverage: latestUpdate ?? undefined,
+          variableMeasured: [
+            { '@type': 'PropertyValue', name: 'USD buy', value: usdRate.buy, unitText: 'IQD per 100 USD' },
+            { '@type': 'PropertyValue', name: 'USD sell', value: usdRate.sell, unitText: 'IQD per 100 USD' },
+          ],
+        },
+      ]
+    : []),
+];
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  jsonLd={jsonLd}
+  lang={lang}
+  keywords={t('keywords')}
+  updatedAt={latestUpdate}
+  showGold={goldRates.length > 0}
+  showCurrencies={otherRates.length > 0}
+>
+  <Header
+    slot="header"
+    lang={lang}
+    showGold={goldRates.length > 0}
+    showCurrencies={otherRates.length > 0}
+  />
+
+  {rates.length > 0 && <RatesTicker slot="ticker" rates={rates} />}
+
+  {
+    errorMessage ? (
+      <StatusMessage type="error" message={errorMessage} />
+    ) : rates.length === 0 ? (
+      <StatusMessage type="empty" message={t('emptyRates')} />
+    ) : (
+      <div id="page-shell" class="space-y-4" data-active-panel="all">
+        <RatesAutoRefresh intervalMs={30000} />
+        {marketSummary ? (
+          <div class="page-chrome">
+            <MarketStatus summary={marketSummary} lang={lang} />
+          </div>
+        ) : null}
+
+        <QuickStats
+          usd={usdRate}
+          ratesCount={rates.length}
+          goldCount={goldRates.length}
+          market={marketSummary}
+          goldHighlight={goldHighlight}
+          lang={lang}
+        />
+
+        <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-stretch">
+          <div data-panel="usd" id="panel-usd" class="min-w-0">
+            {usdRate ? (
+              <UsdHero rate={usdRate} updatedAt={latestUpdate} lang={lang} />
+            ) : (
+              <StatusMessage type="empty" message={t('emptyUsd')} />
+            )}
+          </div>
+          <div class="page-chrome">
+            <WeatherCard lang={lang} />
+          </div>
+        </div>
+
+        {usdRate && <QuickUsdPresets usd={usdRate} lang={lang} />}
+
+        <InsightCards lang={lang} />
+
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <section
+            data-panel="currencies"
+            id="panel-currencies"
+            class="space-y-3"
+            aria-labelledby="rates-heading"
+          >
+            <div class="flex items-center justify-between gap-3 px-1">
+              <h2 id="rates-heading" class="m-0 text-lg font-bold text-[var(--color-ink)]">
+                {t('otherCurrencies')}
+              </h2>
+              <span class="text-xs text-[var(--color-muted)]">{t('perHundredUnit')}</span>
+            </div>
+            {otherRates.length > 0 ? (
+              <ExchangeRatesTable rates={otherRates} lang={lang} />
+            ) : (
+              <StatusMessage type="empty" message={t('emptyOther')} />
+            )}
+          </section>
+
+          <aside class="space-y-4">
+            <div data-panel="converter" id="panel-converter">
+              <CurrencyConverter rates={rates} lang={lang} />
+            </div>
+            {
+              goldRates.length > 0 && (
+                <div data-panel="gold" id="panel-gold">
+                  <GoldRates rates={goldRates} lang={lang} />
+                </div>
+              )
+            }
+          </aside>
+        </div>
+
+        <SeoContent lang={lang} />
+        <FaqSection lang={lang} />
+        <PartnersSection lang={lang} />
+      </div>
+    )
+  }
+</Layout>

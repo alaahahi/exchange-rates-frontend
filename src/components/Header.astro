@@ -1,21 +1,197 @@
 ---
 import { siteConfig } from '../config/site';
+import type { Lang } from '../i18n/ui';
+import { useTranslations, homePath } from '../i18n/utils';
+import ThemeToggle from './ThemeToggle.astro';
+import AppearancePanel from './AppearancePanel.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  lang?: Lang;
+  showGold?: boolean;
+  showCurrencies?: boolean;
+}
+
+const { lang = 'ar', showGold = true, showCurrencies = true } = Astro.props;
+const t = useTranslations(lang);
+
+const items = [
+  { id: 'all', label: t('navHome') },
+  { id: 'usd', label: t('navUsd') },
+  { id: 'gold', label: t('navGold'), hidden: !showGold },
+  { id: 'converter', label: t('navConverter') },
+  { id: 'currencies', label: t('navCurrencies'), hidden: !showCurrencies },
+].filter((item) => !('hidden' in item && item.hidden));
 ---
 
-<header class="border-b border-[var(--color-line)] bg-white/90 backdrop-blur-sm">
-  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-    <a href="/" class="flex items-center gap-3 no-underline" aria-label={siteConfig.name}>
+<header class="site-header sticky top-0 z-40 text-white">
+  <div class="site-header__glow" aria-hidden="true"></div>
+  <div class="mx-auto flex max-w-6xl items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6">
+    <a
+      href={homePath(lang)}
+      class="site-header__brand flex shrink-0 items-center no-underline"
+      aria-label={siteConfig.name}
+      data-focus-reset
+    >
       <img
         src="/logo.png"
         alt={siteConfig.name}
-        width="160"
-        height="72"
-        class="h-12 w-auto sm:h-14"
+        width="148"
+        height="66"
+        class="h-11 w-auto rounded-lg bg-white p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] sm:h-12"
         decoding="async"
       />
     </a>
-    <p class="hidden text-sm font-medium text-[var(--color-muted)] sm:block">
-      {siteConfig.tagline}
-    </p>
+
+    <nav class="min-w-0 flex-1" aria-label="Sections">
+      <div
+        class="section-nav ticker-scroll inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.06] p-1 backdrop-blur-md"
+        role="tablist"
+        id="section-nav"
+      >
+        {
+          items.map((item) => (
+            <button
+              type="button"
+              class="section-nav-btn inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl px-3 text-[13px] font-semibold tracking-wide text-white/65 transition duration-200 hover:text-white sm:px-3.5 sm:text-sm"
+              data-focus={item.id}
+              role="tab"
+              aria-selected={item.id === 'all' ? 'true' : 'false'}
+            >
+              {item.label}
+            </button>
+          ))
+        }
+      </div>
+    </nav>
+
+    <div class="site-header__tools flex shrink-0 items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] p-1 backdrop-blur-md">
+      <LanguageSwitcher lang={lang} />
+      <AppearancePanel lang={lang} />
+      <ThemeToggle />
+    </div>
   </div>
+  <div class="site-header__line" aria-hidden="true"></div>
 </header>
+
+<style>
+  .site-header {
+    isolation: isolate;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-navy) 94%, transparent) 0%,
+        color-mix(in srgb, var(--color-navy-dark) 92%, transparent) 100%
+      );
+    backdrop-filter: blur(18px) saturate(1.35);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28);
+  }
+
+  .site-header__glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 120% at 100% 0%, color-mix(in srgb, var(--color-gold) 18%, transparent), transparent 55%),
+      radial-gradient(ellipse 40% 100% at 0% 100%, rgba(255, 255, 255, 0.06), transparent 50%);
+    z-index: -1;
+  }
+
+  .site-header__line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-gold) 55%, transparent) 28%,
+      rgba(255, 255, 255, 0.2) 50%,
+      color-mix(in srgb, var(--color-gold) 55%, transparent) 72%,
+      transparent 100%
+    );
+  }
+
+  .section-nav-btn.is-active {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-gold) 70%, white) 0%, var(--color-gold) 100%);
+    color: var(--color-navy);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.25) inset,
+      0 6px 16px color-mix(in srgb, var(--color-gold) 28%, transparent);
+  }
+
+  .site-header__tools :global(.lang-trigger),
+  .site-header__tools :global(#theme-toggle) {
+    height: 2.35rem;
+    min-width: 2.35rem;
+    border: 0;
+    border-radius: 0.85rem;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .site-header__tools :global(.lang-trigger:hover),
+  .site-header__tools :global(#theme-toggle:hover) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f0d9a6;
+  }
+
+  .site-header__tools :global(.lang-trigger) {
+    padding-inline: 0.65rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section-nav-btn {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.section-nav-btn'));
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-panel]'));
+  const shell = document.getElementById('page-shell');
+  const resetLinks = Array.from(document.querySelectorAll('[data-focus-reset]'));
+
+  function setFocus(focusId: string): void {
+    const showAll = focusId === 'all';
+    document.body.classList.toggle('section-focus-mode', !showAll);
+    shell?.classList.toggle('is-focusing', !showAll);
+    shell?.setAttribute('data-active-panel', showAll ? 'all' : focusId);
+
+    panels.forEach((panel) => {
+      const id = panel.dataset.panel;
+      const match = showAll || id === focusId;
+      panel.hidden = !match;
+      panel.classList.toggle('is-expanded', !showAll && match);
+    });
+
+    buttons.forEach((button) => {
+      const active = button.dataset.focus === focusId;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    if (!showAll) {
+      document.querySelector<HTMLElement>(`[data-panel="${focusId}"]`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => setFocus(button.dataset.focus || 'all'));
+  });
+
+  resetLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (document.body.classList.contains('section-focus-mode')) {
+        event.preventDefault();
+        setFocus('all');
+      }
+    });
+  });
+
+  setFocus('all');
+</script>

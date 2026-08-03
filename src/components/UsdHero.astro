@@ -1,0 +1,71 @@
+---
+import type { ExchangeRate } from '../lib/api/types';
+import { formatInteger, formatPercentChange, formatDateTime } from '../lib/format';
+import { changeDirection } from '../lib/appearance';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  rate: ExchangeRate;
+  updatedAt?: string | null;
+  lang?: Lang;
+}
+
+const { rate, updatedAt = rate.updated_at, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+const dir = changeDirection(rate.change);
+
+function changeLabel(change: number | null): string {
+  if (change === null || Number.isNaN(change) || change === 0) return t('noChange');
+  return formatPercentChange(change);
+}
+
+const updatedLabel = updatedAt ? formatDateTime(updatedAt) : '';
+---
+
+<section class="overflow-hidden rounded-3xl bg-[var(--color-navy)] text-white shadow-lg brand-panel" aria-labelledby="usd-hero-heading">
+  <div class="relative px-4 py-5 sm:px-6 sm:py-6">
+    <div
+      class="pointer-events-none absolute inset-0 opacity-40"
+      style="background: radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--color-gold) 35%, transparent), transparent 45%), radial-gradient(circle at 100% 100%, rgba(255,255,255,0.08), transparent 40%);"
+      aria-hidden="true"
+    ></div>
+    <div class="relative">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="m-0 text-xs font-semibold tracking-wide text-[var(--color-gold-soft)]">{t('heroEyebrow')}</p>
+          <h1 id="usd-hero-heading" class="m-0 mt-1 text-2xl font-bold sm:text-3xl">{t('heroTitle')}</h1>
+          <p class="m-0 mt-1 text-sm text-white/70">{rate.name} — {t('heroSubtitle')}</p>
+        </div>
+        <div class="text-start sm:text-end">
+          <span class={`rate-change rate-change--${dir}`} data-rate={rate.currency} data-field="change" data-change-dir={dir}>{changeLabel(rate.change)}</span>
+          {
+            updatedLabel && (
+              <p class="m-0 mt-1 text-xs text-white/55">
+                {t('lastUpdate')} <time datetime={updatedAt ?? undefined} data-rate-updated>{updatedLabel}</time>
+              </p>
+            )
+          }
+        </div>
+      </div>
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+          <p class="m-0 text-xs font-medium text-white/65 sm:text-sm">{t('buy')}</p>
+          <p class="rate-buy m-0 mt-2 text-3xl font-bold tabular-nums tracking-tight hero-price sm:text-4xl" data-rate={rate.currency} data-field="buy">{formatInteger(rate.buy)}</p>
+          <p class="m-0 mt-1 text-xs text-white/50">{t('iqd')} · {t('perHundredUsd')}</p>
+        </div>
+        <div class="rounded-2xl border border-[var(--color-gold)]/50 bg-[linear-gradient(160deg,color-mix(in srgb,var(--color-gold) 28%,transparent),color-mix(in srgb,var(--color-gold) 8%,transparent))] p-4">
+          <p class="m-0 text-xs font-medium text-[var(--color-gold-soft)] sm:text-sm">{t('sell')}</p>
+          <p class="rate-sell m-0 mt-2 text-3xl font-bold tabular-nums tracking-tight hero-price sm:text-4xl" data-rate={rate.currency} data-field="sell">{formatInteger(rate.sell)}</p>
+          <p class="m-0 mt-1 text-xs text-white/50">{t('iqd')} · {t('perHundredUsd')}</p>
+        </div>
+      </div>
+      <p class="m-0 mt-4 text-center text-xs text-white/55 sm:text-sm">
+        {t('spreadLabel')}
+        <strong class="text-[var(--color-gold-soft)]" data-rate={rate.currency} data-field="spread">{formatInteger(Math.max(0, rate.sell - rate.buy))}</strong>
+        {t('iqd')}
+        <span class="text-white/40"> ({t('perHundredUsd')})</span>
+      </p>
+    </div>
+  </div>
+</section>

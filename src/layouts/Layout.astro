@@ -3,13 +3,22 @@ import '../styles/global.css';
 import SeoHead from '../components/SeoHead.astro';
 import JsonLd from '../components/JsonLd.astro';
 import Header from '../components/Header.astro';
+import PromoMarquee from '../components/PromoMarquee.astro';
 import { siteConfig } from '../config/site';
+import type { Lang } from '../i18n/ui';
+import { localeMeta } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
 
 interface Props {
   title?: string;
   description?: string;
   canonical?: string;
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
+  lang?: Lang;
+  keywords?: string;
+  updatedAt?: string | null;
+  showGold?: boolean;
+  showCurrencies?: boolean;
 }
 
 const {
@@ -17,35 +26,76 @@ const {
   description = siteConfig.description,
   canonical = siteConfig.url,
   jsonLd,
+  lang = 'ar',
+  keywords = '',
+  updatedAt = null,
+  showGold = true,
+  showCurrencies = true,
 } = Astro.props;
+
+const t = useTranslations(lang);
+const dir = localeMeta[lang].dir;
+const htmlLang = localeMeta[lang].htmlLang;
 ---
 
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang={htmlLang} dir={dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#0d2149" />
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+    {
+      lang === 'en' ? (
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      ) : (
+        <link
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      )
+    }
+    <script is:inline>
+      (function () {
+        try {
+      var stored = localStorage.getItem('theme');
+      var dark = stored ? stored === 'dark' : true;
+      document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
+    <SeoHead
+      title={title}
+      description={description}
+      canonical={canonical}
+      lang={lang}
+      keywords={keywords}
+      updatedAt={updatedAt}
     />
-    <SeoHead title={title} description={description} canonical={canonical} />
     {jsonLd && <JsonLd data={jsonLd} />}
   </head>
-  <body>
-    <Header />
-    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+  <body class="flex min-h-screen flex-col">
+    <slot name="header">
+      <Header lang={lang} showGold={showGold} showCurrencies={showCurrencies} />
+    </slot>
+    <div class="page-chrome">
+      <PromoMarquee lang={lang} />
+      <slot name="ticker" />
+    </div>
+    <main class="mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6">
       <slot />
     </main>
-    <footer class="border-t border-[var(--color-line)] bg-white/70 py-6 text-center text-sm text-[var(--color-muted)]">
+    <footer class="page-chrome mt-auto border-t border-[var(--color-line)] bg-[var(--color-card)] py-5 text-center text-sm text-[var(--color-muted)]">
       <p class="m-0">
         © {new Date().getFullYear()}
-        <span class="font-semibold text-[var(--color-navy)]">dinar</span><span class="font-semibold text-[var(--color-gold)]">-now</span>
-        — {siteConfig.tagline}
+        <span class="font-semibold text-[var(--color-ink)]">dinar</span><span class="font-semibold text-[var(--color-gold)]">-now</span>
+        — {t('footerTag')}
       </p>
     </footer>
   </body>

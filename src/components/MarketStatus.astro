@@ -1,0 +1,38 @@
+---
+import type { MarketSummary } from '../lib/api/types';
+import { formatInteger } from '../lib/format';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  summary: MarketSummary;
+  lang?: Lang;
+}
+
+const { summary, lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+const isOpen = summary.is_open;
+const label = isOpen ? t('marketOpen') : t('marketClosed');
+---
+
+<div
+  class:list={[
+    'flex flex-wrap items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm',
+    isOpen ? 'status-open border-emerald-200 bg-emerald-50 text-emerald-900' : 'status-closed border-amber-200 bg-amber-50 text-amber-950',
+  ]}
+  role="status"
+>
+  <div class="flex items-center gap-2 font-semibold">
+    <span class:list={['h-2.5 w-2.5 rounded-full', isOpen ? 'bg-emerald-500' : 'bg-amber-500']} aria-hidden="true"></span>
+    {label}
+  </div>
+  {
+    summary.usd && (
+      <p class="m-0 text-xs sm:text-sm">
+        {t('usdSpread')}
+        <strong class="tabular-nums">{formatInteger(summary.usd.spread)}</strong>
+        {t('iqd')}
+      </p>
+    )
+  }
+</div>

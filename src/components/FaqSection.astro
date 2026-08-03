@@ -1,0 +1,38 @@
+---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'ar' } = Astro.props;
+const t = useTranslations(lang);
+
+const faqs = [
+  { q: t('faq1q'), a: t('faq1a') },
+  { q: t('faq2q'), a: t('faq2a') },
+  { q: t('faq3q'), a: t('faq3a') },
+  { q: t('faq4q'), a: t('faq4a') },
+  { q: t('faq5q'), a: t('faq5a') },
+];
+---
+
+<section class="page-chrome rounded-2xl border border-[var(--color-line)] bg-[var(--color-card)] p-4 shadow-sm" aria-labelledby="faq-heading">
+  <h2 id="faq-heading" class="m-0 mb-3 text-base font-bold text-[var(--color-ink)]">{t('faqTitle')}</h2>
+  <div class="divide-y divide-[var(--color-line)]">
+    {
+      faqs.map((item, index) => (
+        <details class="group py-3" open={index === 0}>
+          <summary class="cursor-pointer list-none text-sm font-semibold text-[var(--color-ink)] marker:content-none">
+            <span class="flex items-center justify-between gap-3">
+              {item.q}
+              <span class="text-[var(--color-gold-dark)] transition group-open:rotate-45" aria-hidden="true">+</span>
+            </span>
+          </summary>
+          <p class="m-0 mt-2 text-sm leading-relaxed text-[var(--color-muted)]">{item.a}</p>
+        </details>
+      ))
+    }
+  </div>
+</section>

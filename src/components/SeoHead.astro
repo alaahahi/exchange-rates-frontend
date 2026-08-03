@@ -1,5 +1,8 @@
 ---
 import { siteConfig } from '../config/site';
+import type { Lang } from '../i18n/ui';
+import { localeMeta } from '../i18n/ui';
+import { alternateUrls } from '../i18n/utils';
 
 interface Props {
   title?: string;
@@ -7,6 +10,9 @@ interface Props {
   canonical?: string;
   robots?: string;
   ogImage?: string;
+  keywords?: string;
+  lang?: Lang;
+  updatedAt?: string | null;
 }
 
 const {
@@ -15,27 +21,52 @@ const {
   canonical = siteConfig.url,
   robots = siteConfig.robots,
   ogImage = siteConfig.ogImage,
+  keywords = '',
+  lang = 'ar',
+  updatedAt = null,
 } = Astro.props;
 
 const absoluteOg = ogImage.startsWith('http')
   ? ogImage
   : new URL(ogImage, siteConfig.url).toString();
+
+const alternates = alternateUrls(siteConfig.url);
+const ogLocale =
+  lang === 'en' ? 'en_US' : lang === 'ku' ? 'ckb_IQ' : 'ar_IQ';
+const otherLocales = (Object.keys(localeMeta) as Lang[])
+  .filter((id) => id !== lang)
+  .map((id) => (id === 'en' ? 'en_US' : id === 'ku' ? 'ckb_IQ' : 'ar_IQ'));
 ---
 
 <title>{title}</title>
 <meta name="description" content={description} />
+{keywords && <meta name="keywords" content={keywords} />}
 <meta name="robots" content={robots} />
+<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+<meta name="author" content={siteConfig.name} />
+<meta name="geo.region" content="IQ" />
+<meta name="geo.placename" content="Iraq" />
 <link rel="canonical" href={canonical} />
 
+<link rel="alternate" hreflang="ar" href={alternates.ar} />
+<link rel="alternate" hreflang="en" href={alternates.en} />
+<link rel="alternate" hreflang="ckb" href={alternates.ku} />
+<link rel="alternate" hreflang="x-default" href={alternates.ar} />
+
 <meta property="og:type" content="website" />
-<meta property="og:locale" content="ar_IQ" />
+<meta property="og:locale" content={ogLocale} />
+{otherLocales.map((locale) => <meta property="og:locale:alternate" content={locale} />)}
 <meta property="og:site_name" content={siteConfig.name} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={absoluteOg} />
+<meta property="og:image:alt" content={title} />
+{updatedAt && <meta property="og:updated_time" content={updatedAt} />}
+{updatedAt && <meta name="last-modified" content={updatedAt} />}
 
 <meta name="twitter:card" content={siteConfig.twitterCard} />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={absoluteOg} />
+<meta name="twitter:image:alt" content={title} />

@@ -1,22 +1,12 @@
 ---
+import { formatDateTime } from '../lib/format';
+
 interface Props {
   updatedAt: string | null;
 }
 
 const { updatedAt } = Astro.props;
-
-let formatted = 'غير متوفر';
-if (updatedAt) {
-  try {
-    formatted = new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Baghdad',
-    }).format(new Date(updatedAt));
-  } catch {
-    formatted = updatedAt;
-  }
-}
+const formatted = updatedAt ? formatDateTime(updatedAt) : 'غير متوفر';
 ---
 
 <p class="m-0 text-sm text-[var(--color-muted)]" id="last-updated" data-updated-at={updatedAt ?? ''}>
