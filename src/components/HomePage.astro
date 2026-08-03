@@ -204,7 +204,7 @@ const jsonLd = [
       <StatusMessage type="empty" message={t('emptyRates')} />
     ) : (
       <div id="page-shell" class="space-y-4" data-active-panel="all">
-        <RatesAutoRefresh intervalMs={30000} />
+        <RatesAutoRefresh intervalMs={30000} lang={lang} />
         {marketSummary ? (
           <div class="page-chrome">
             <MarketStatus summary={marketSummary} lang={lang} />

@@ -62,6 +62,10 @@ html.dark body {
   color: var(--color-ink);
 }
 
+body {
+  padding-bottom: 3.25rem;
+}
+
 html.dark select,
 html.dark option,
 html.dark input,

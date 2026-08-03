@@ -1,24 +1,139 @@
 ---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
 interface Props {
+  /** Optional absolute API base. Defaults to same-origin proxy (avoids CORS). */
   apiUrl?: string;
   intervalMs?: number;
+  lang?: Lang;
 }
 
-const apiUrl = (Astro.props.apiUrl ?? import.meta.env.PUBLIC_API_URL ?? '').replace(/\/$/, '');
+const apiUrl = (Astro.props.apiUrl ?? '/api').replace(/\/$/, '');
 const intervalMs = Astro.props.intervalMs ?? 30000;
+const lang = Astro.props.lang ?? 'ar';
+const t = useTranslations(lang);
+const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
 ---
 
-{
-  apiUrl && (
-    <div
-      id="rates-auto-refresh"
-      class="hidden"
-      data-api-url={apiUrl}
-      data-interval={String(intervalMs)}
-      aria-hidden="true"
-    />
-  )
-}
+<div
+  id="rates-auto-refresh"
+  class="hidden"
+  data-api-url={apiUrl}
+  data-interval={String(intervalMs)}
+  aria-hidden="true"
+></div>
+
+<div
+  id="rates-refresh-bar"
+  class="rates-refresh-bar"
+  role="status"
+  aria-live="polite"
+  data-seconds-total={String(secondsTotal)}
+  data-waiting={t('autoRefreshWaiting')}
+  data-updating={t('autoRefreshUpdating')}
+>
+  <div class="rates-refresh-bar__inner">
+    <span class="rates-refresh-bar__dot" aria-hidden="true"></span>
+    <span class="rates-refresh-bar__label">{t('autoRefreshLabel')}</span>
+    <strong id="rates-countdown" class="rates-refresh-bar__count">{secondsTotal}</strong>
+    <span class="rates-refresh-bar__unit">{t('autoRefreshSeconds')}</span>
+    <span class="rates-refresh-bar__sep" aria-hidden="true">·</span>
+    <span id="rates-refresh-status" class="rates-refresh-bar__status">{t('autoRefreshWaiting')}</span>
+  </div>
+  <div class="rates-refresh-bar__track" aria-hidden="true">
+    <div id="rates-countdown-progress" class="rates-refresh-bar__progress" style="width:100%"></div>
+  </div>
+</div>
+
+<style>
+  .rates-refresh-bar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--color-navy) 94%, transparent);
+    color: #fff;
+    border-top: 1px solid color-mix(in srgb, var(--color-gold) 45%, transparent);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .rates-refresh-bar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1rem 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .rates-refresh-bar__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-gold);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold) 25%, transparent);
+    animation: rates-pulse 1.4s ease-in-out infinite;
+  }
+
+  .rates-refresh-bar__label {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .rates-refresh-bar__count {
+    min-width: 1.6rem;
+    text-align: center;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-gold-soft, #e8d4a8);
+  }
+
+  .rates-refresh-bar__unit,
+  .rates-refresh-bar__sep,
+  .rates-refresh-bar__status {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+  }
+
+  .rates-refresh-bar__track {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .rates-refresh-bar__progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-gold), color-mix(in srgb, var(--color-gold) 55%, white));
+    transition: width 0.9s linear;
+  }
+
+  .rates-refresh-bar.is-updating .rates-refresh-bar__status {
+    color: var(--color-gold-soft, #e8d4a8);
+  }
+
+  @keyframes rates-pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.55;
+      transform: scale(0.85);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rates-refresh-bar__dot {
+      animation: none;
+    }
+    .rates-refresh-bar__progress {
+      transition: none;
+    }
+  }
+</style>
 
 <script>
   type RateRow = {
@@ -32,12 +147,19 @@ const intervalMs = Astro.props.intervalMs ?? 30000;
   };
 
   const root = document.getElementById('rates-auto-refresh');
-  if (!root) {
-    // no-op
-  } else {
-    const apiUrl = root.dataset.apiUrl || '';
+  const bar = document.getElementById('rates-refresh-bar');
+  const countdownEl = document.getElementById('rates-countdown');
+  const progressEl = document.getElementById('rates-countdown-progress');
+  const statusEl = document.getElementById('rates-refresh-status');
+
+  if (root && bar && countdownEl && progressEl) {
+    const apiUrl = root.dataset.apiUrl || '/api';
     const intervalMs = Number(root.dataset.interval || '30000');
-    let timer: number | null = null;
+    const secondsTotal = Math.max(1, Number(bar.dataset.secondsTotal || Math.round(intervalMs / 1000)));
+    const waitingText = bar.dataset.waiting || '';
+    const updatingText = bar.dataset.updating || '…';
+    let secondsLeft = secondsTotal;
+    let tickTimer: number | null = null;
     let inFlight = false;
 
     const numberFmt = new Intl.NumberFormat('en-US', { useGrouping: false, maximumFractionDigits: 4 });
@@ -58,6 +180,12 @@ const intervalMs = Astro.props.intervalMs ?? 30000;
       document.querySelectorAll(selector).forEach((el) => {
         el.textContent = value;
       });
+    }
+
+    function renderCountdown(): void {
+      countdownEl.textContent = String(secondsLeft);
+      const pct = (secondsLeft / secondsTotal) * 100;
+      progressEl.style.width = `${Math.max(0, Math.min(100, pct))}%`;
     }
 
     function applyRates(rates: RateRow[]): void {
@@ -118,11 +246,11 @@ const intervalMs = Astro.props.intervalMs ?? 30000;
             buy: rate.buy,
             sell: rate.sell,
             quote_unit: rate.quote_unit ?? 100,
+            change: rate.change,
           })),
           iqd,
         ];
         converter.setAttribute('data-rates', JSON.stringify(next));
-        // Refresh in-memory converter rates by reloading script state via custom event
         window.dispatchEvent(new CustomEvent('rates:updated', { detail: { rates: next } }));
         const fromAmount = document.getElementById('from-amount');
         fromAmount?.dispatchEvent(new Event('input', { bubbles: true }));
@@ -145,6 +273,8 @@ const intervalMs = Astro.props.intervalMs ?? 30000;
       if (document.visibilityState !== 'visible') return;
 
       inFlight = true;
+      bar.classList.add('is-updating');
+      if (statusEl) statusEl.textContent = updatingText;
 
       try {
         const response = await fetch(`${apiUrl}/exchange-rates`, {
@@ -156,22 +286,45 @@ const intervalMs = Astro.props.intervalMs ?? 30000;
           throw new Error('bad response');
         }
         applyRates(body.data as RateRow[]);
-      } catch {
-        // Keep last known prices on network errors.
+      } catch (error) {
+        console.warn('[rates-auto-refresh] poll failed', error);
       } finally {
         inFlight = false;
+        bar.classList.remove('is-updating');
+        if (statusEl) statusEl.textContent = waitingText;
+        secondsLeft = secondsTotal;
+        renderCountdown();
       }
     }
 
-    function start(): void {
-      if (timer !== null) window.clearInterval(timer);
-      timer = window.setInterval(() => {
+    function tick(): void {
+      if (document.visibilityState !== 'visible') return;
+      if (inFlight) return;
+
+      secondsLeft -= 1;
+      if (secondsLeft <= 0) {
+        secondsLeft = 0;
+        renderCountdown();
         void poll();
-      }, Number.isFinite(intervalMs) && intervalMs > 0 ? intervalMs : 30000);
+        return;
+      }
+      renderCountdown();
+    }
+
+    function start(): void {
+      if (tickTimer !== null) window.clearInterval(tickTimer);
+      secondsLeft = secondsTotal;
+      renderCountdown();
+      void poll();
+      tickTimer = window.setInterval(tick, 1000);
     }
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') void poll();
+      if (document.visibilityState === 'visible') {
+        secondsLeft = secondsTotal;
+        renderCountdown();
+        void poll();
+      }
     });
 
     start();

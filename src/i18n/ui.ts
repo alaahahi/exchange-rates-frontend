@@ -95,6 +95,10 @@ type UiStrings = {
   lightMode: string;
   languageMenu: string;
   footerTag: string;
+  autoRefreshLabel: string;
+  autoRefreshSeconds: string;
+  autoRefreshWaiting: string;
+  autoRefreshUpdating: string;
   partnersTitle: string;
   opensNewTab: string;
   colorPanel: string;
@@ -204,6 +208,10 @@ export const ui: Record<Lang, UiStrings> = {
     lightMode: 'الوضع النهاري',
     languageMenu: 'اختيار اللغة',
     footerTag: 'سعر الصرف في العراق',
+    autoRefreshLabel: 'تحديث الأسعار خلال',
+    autoRefreshSeconds: 'ث',
+    autoRefreshWaiting: 'تحديث تلقائي',
+    autoRefreshUpdating: 'جاري التحديث…',
     partnersTitle: 'مواقع مهمة',
     opensNewTab: 'يفتح في تبويب جديد',
     colorPanel: 'ألوان الموقع',
@@ -318,6 +326,10 @@ export const ui: Record<Lang, UiStrings> = {
     lightMode: 'Light mode',
     languageMenu: 'Choose language',
     footerTag: 'Exchange rates now',
+    autoRefreshLabel: 'Next refresh in',
+    autoRefreshSeconds: 's',
+    autoRefreshWaiting: 'Auto refresh',
+    autoRefreshUpdating: 'Updating…',
     partnersTitle: 'Important websites',
     opensNewTab: 'opens in a new tab',
     colorPanel: 'Site colors',
@@ -432,6 +444,10 @@ export const ui: Record<Lang, UiStrings> = {
     lightMode: 'دۆخی ڕووناک',
     languageMenu: 'هەڵبژاردنی زمان',
     footerTag: 'نرخی دراو ئێستا',
+    autoRefreshLabel: 'نوێکردنەوە لە',
+    autoRefreshSeconds: 'چرکە',
+    autoRefreshWaiting: 'نوێکردنەوەی خۆکار',
+    autoRefreshUpdating: 'خەریکی نوێکردنەوە…',
     partnersTitle: 'ماڵپەڕە گرنگەکان',
     opensNewTab: 'لە تابێکی نوێدا دەکرێتەوە',
     colorPanel: 'ڕەنگەکانی ماڵپەڕ',
