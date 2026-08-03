@@ -19,7 +19,7 @@ const STATIC_PROMO_MESSAGES: PromoMessage[] = [
     lang: 'ar',
     is_active: true,
     sort_order: 1,
-    text: 'سعر الصرف في العراق الآن — تابع الدولار والدينار لحظة بلحظة',
+    text: 'سعر الصرف في العراق — تابع الدولار والدينار لحظة بلحظة',
   },
   {
     id: 'ar-2',

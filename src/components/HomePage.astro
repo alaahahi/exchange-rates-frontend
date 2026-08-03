@@ -122,7 +122,7 @@ const jsonLd = [
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: siteConfig.name,
-    alternateName: ['dinar-now', 'سعر الصرف في العراق الآن', 'Iraq exchange rate now'],
+    alternateName: ['dinar-now', 'سعر الصرف في العراق', 'سعر الصرف في العراق الآن', 'Iraq exchange rate'],
     url: siteConfig.url,
     description: pageDescription,
     inLanguage: [htmlLang, 'ar', 'en', 'ckb'],
@@ -136,6 +136,8 @@ const jsonLd = [
     inLanguage: htmlLang,
     isPartOf: { '@type': 'WebSite', name: siteConfig.name, url: siteConfig.url },
     about: [
+      { '@type': 'Thing', name: 'سعر الصرف في العراق' },
+      { '@type': 'Thing', name: 'سعر الدولار في العراق' },
       { '@type': 'Thing', name: 'Iraqi Dinar exchange rate' },
       { '@type': 'Thing', name: 'Gold price Iraq' },
       { '@type': 'Organization', name: 'Central Bank of Iraq', url: 'https://www.cbi.iq/' },

@@ -14,12 +14,12 @@ function normalizeSiteUrl(raw: string): string {
 
 export const siteConfig = {
   name: import.meta.env.PUBLIC_SITE_NAME || 'dinar-now',
-  tagline: 'سعر الصرف في العراق الآن',
+  tagline: 'سعر الصرف في العراق',
   url: normalizeSiteUrl(import.meta.env.PUBLIC_SITE_URL || 'https://dinar-now.com'),
   locale: 'ar',
-  title: 'سعر الصرف في العراق الآن | سعر الدولار والذهب | dinar-now',
+  title: 'سعر الصرف في العراق | سعر الدولار والذهب الآن | dinar-now',
   description:
-    'سعر الصرف في العراق الآن: سعر الدولار مقابل الدينار العراقي، سعر الذهب، حاسبة تحويل العملات، ومتابعة السوق مع المصرف المركزي العراقي.',
+    'سعر الصرف في العراق الآن: سعر الدولار مقابل الدينار العراقي شراء ومبيع، سعر الذهب، وحاسبة تحويل العملات — مرجع يومي محدّث على dinar-now.',
   ogImage: '/og-default.svg',
   twitterCard: 'summary_large_image' as const,
   robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
