@@ -26,34 +26,46 @@ const items = [
 
 <header class="site-header sticky top-0 z-40 text-white">
   <div class="site-header__glow" aria-hidden="true"></div>
-  <div class="mx-auto flex max-w-6xl items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6">
-    <a
-      href={homePath(lang)}
-      class="site-header__brand flex shrink-0 items-center no-underline"
-      aria-label={siteConfig.name}
-      data-focus-reset
-    >
-      <img
-        src="/logo.png"
-        alt={siteConfig.name}
-        width="148"
-        height="66"
-        class="h-11 w-auto rounded-lg bg-white p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] sm:h-12"
-        decoding="async"
-      />
-    </a>
+  <div class="site-header__frame mx-auto max-w-6xl px-3 py-3 sm:px-6 sm:py-4">
+    <div class="site-header__top">
+      <div class="site-header__tools">
+        <LanguageSwitcher lang={lang} />
+        <AppearancePanel lang={lang} />
+        <ThemeToggle />
+      </div>
 
-    <nav class="min-w-0 flex-1" aria-label="Sections">
-      <div
-        class="section-nav ticker-scroll inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.06] p-1 backdrop-blur-md"
-        role="tablist"
-        id="section-nav"
+      <a
+        href={homePath(lang)}
+        class="site-header__brand no-underline"
+        aria-label={siteConfig.name}
+        data-focus-reset
       >
+        <span class="site-header__crest" aria-hidden="true"></span>
+        <img
+          src="/logo.png"
+          alt={siteConfig.name}
+          width="148"
+          height="66"
+          class="site-header__logo"
+          decoding="async"
+        />
+        <span class="site-header__subtitle">{siteConfig.description}</span>
+      </a>
+
+      <div class="site-header__meta" aria-hidden="true">
+        <span class="site-header__meta-line"></span>
+        <span class="site-header__meta-text">Live Market Board</span>
+        <span class="site-header__meta-line"></span>
+      </div>
+    </div>
+
+    <nav class="site-header__nav" aria-label="Sections">
+      <div class="section-nav ticker-scroll" role="tablist" id="section-nav">
         {
           items.map((item) => (
             <button
               type="button"
-              class="section-nav-btn inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl px-3 text-[13px] font-semibold tracking-wide text-white/65 transition duration-200 hover:text-white sm:px-3.5 sm:text-sm"
+              class="section-nav-btn inline-flex min-h-11 shrink-0 items-center justify-center rounded-full px-4 text-[13px] font-semibold tracking-[0.12em] text-white/68 transition duration-200 hover:text-white sm:px-5 sm:text-sm"
               data-focus={item.id}
               role="tab"
               aria-selected={item.id === 'all' ? 'true' : 'false'}
@@ -64,12 +76,6 @@ const items = [
         }
       </div>
     </nav>
-
-    <div class="site-header__tools flex shrink-0 items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] p-1 backdrop-blur-md">
-      <LanguageSwitcher lang={lang} />
-      <AppearancePanel lang={lang} />
-      <ThemeToggle />
-    </div>
   </div>
   <div class="site-header__line" aria-hidden="true"></div>
 </header>
@@ -78,14 +84,94 @@ const items = [
   .site-header {
     isolation: isolate;
     background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-navy) 94%, transparent) 0%,
-        color-mix(in srgb, var(--color-navy-dark) 92%, transparent) 100%
-      );
-    backdrop-filter: blur(18px) saturate(1.35);
-    -webkit-backdrop-filter: blur(18px) saturate(1.35);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28);
+      linear-gradient(180deg, color-mix(in srgb, var(--color-navy) 97%, transparent) 0%, color-mix(in srgb, var(--color-navy-dark) 96%, transparent) 100%);
+    backdrop-filter: blur(18px) saturate(1.18);
+    -webkit-backdrop-filter: blur(18px) saturate(1.18);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.26);
+  }
+
+  .site-header__frame {
+    position: relative;
+  }
+
+  .site-header__top {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    align-items: center;
+    justify-items: center;
+  }
+
+  .site-header__brand {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    text-align: center;
+    color: inherit;
+  }
+
+  .site-header__crest {
+    width: 5.5rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-gold) 75%, white) 50%, transparent 100%);
+    opacity: 0.9;
+  }
+
+  .site-header__logo {
+    height: 4rem;
+    width: auto;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92));
+    padding: 0.4rem 0.55rem;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.16),
+      0 12px 36px rgba(0, 0, 0, 0.2);
+  }
+
+  .site-header__subtitle,
+  .site-header__meta-text {
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-gold) 70%, white);
+  }
+
+  .site-header__meta {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .site-header__meta-line {
+    width: 2.75rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  }
+
+  .site-header__nav {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .section-nav {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    border-radius: 999px;
+    border: 1px solid rgba(194, 153, 83, 0.24);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
+      rgba(8, 16, 34, 0.78);
+    padding: 0.45rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 10px 26px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(10px);
   }
 
   .site-header__glow {
@@ -111,31 +197,83 @@ const items = [
   }
 
   .section-nav-btn.is-active {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-gold) 70%, white) 0%, var(--color-gold) 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-gold) 75%, white) 0%, var(--color-gold) 100%);
     color: var(--color-navy);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.25) inset,
-      0 6px 16px color-mix(in srgb, var(--color-gold) 28%, transparent);
+      0 1px 0 rgba(255, 255, 255, 0.34) inset,
+      0 8px 18px color-mix(in srgb, var(--color-gold) 32%, transparent);
   }
 
   .site-header__tools :global(.lang-trigger),
+  .site-header__tools :global(#appearance-toggle),
   .site-header__tools :global(#theme-toggle) {
-    height: 2.35rem;
-    min-width: 2.35rem;
-    border: 0;
-    border-radius: 0.85rem;
-    background: transparent;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.88);
   }
 
   .site-header__tools :global(.lang-trigger:hover),
+  .site-header__tools :global(#appearance-toggle:hover),
   .site-header__tools :global(#theme-toggle:hover) {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.11);
     color: #f0d9a6;
   }
 
+  .site-header__tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.045);
+    padding: 0.35rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
   .site-header__tools :global(.lang-trigger) {
-    padding-inline: 0.65rem;
+    padding-inline: 0.8rem;
+  }
+
+  @media (min-width: 900px) {
+    .site-header__top {
+      grid-template-columns: 1fr auto 1fr;
+    }
+
+    .site-header__tools {
+      justify-self: start;
+    }
+
+    .site-header__meta {
+      display: inline-flex;
+      justify-self: end;
+    }
+
+    [dir='rtl'] .site-header__tools {
+      justify-self: end;
+    }
+
+    [dir='rtl'] .site-header__meta {
+      justify-self: start;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .site-header__logo {
+      height: 3.45rem;
+    }
+
+    .site-header__subtitle {
+      letter-spacing: 0.18em;
+      font-size: 0.62rem;
+    }
+
+    .section-nav {
+      width: 100%;
+      justify-content: flex-start;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
