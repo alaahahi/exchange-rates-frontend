@@ -203,8 +203,9 @@ const jsonLd = [
     ) : rates.length === 0 ? (
       <StatusMessage type="empty" message={t('emptyRates')} />
     ) : (
-      <div id="page-shell" class="space-y-4" data-active-panel="all">
+      <>
         <RatesAutoRefresh intervalMs={30000} lang={lang} />
+        <div id="page-shell" class="space-y-4" data-active-panel="all">
         {marketSummary ? (
           <div class="page-chrome">
             <MarketStatus summary={marketSummary} lang={lang} />
@@ -271,10 +272,11 @@ const jsonLd = [
           </aside>
         </div>
 
-        <SeoContent lang={lang} />
-        <FaqSection lang={lang} />
-        <PartnersSection lang={lang} />
-      </div>
+          <SeoContent lang={lang} />
+          <FaqSection lang={lang} />
+          <PartnersSection lang={lang} />
+        </div>
+      </>
     )
   }
 </Layout>
