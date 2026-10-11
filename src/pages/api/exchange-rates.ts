@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 export const prerender = false;
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   const apiBase = (import.meta.env.PUBLIC_API_URL || '').replace(/\/$/, '');
   if (!apiBase) {
     return new Response(JSON.stringify({ success: false, message: 'PUBLIC_API_URL missing' }), {
@@ -11,13 +11,15 @@ export const GET: APIRoute = async () => {
     });
   }
 
+  const slug = (url.searchParams.get('slug') || '').trim();
+  const qs = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+
   try {
-    const response = await fetch(`${apiBase}/exchange-rates`, {
+    const response = await fetch(`${apiBase}/exchange-rates${qs}`, {
       headers: {
         Accept: 'application/json',
         'Cache-Control': 'no-cache',
       },
-      // Always hit origin API for fresh board data; Cloudflare/browser can still cache this proxy briefly.
       cache: 'no-store',
     });
 

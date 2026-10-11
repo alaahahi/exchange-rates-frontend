@@ -1,18 +1,22 @@
 ---
 import type { Lang } from '../i18n/ui';
 import { localeMeta } from '../i18n/ui';
-import { useTranslations } from '../i18n/utils';
+import { localizedPath, useTranslations } from '../i18n/utils';
 
 interface Props {
   lang?: Lang;
+  /** Keep tenant path across languages, e.g. /o/office-slug */
+  pathSuffix?: string;
 }
 
-const { lang = 'ar' } = Astro.props;
+const { lang = 'ar', pathSuffix = '' } = Astro.props;
 const t = useTranslations(lang);
 const current = localeMeta[lang];
+const suffix = pathSuffix && pathSuffix !== '/' ? pathSuffix : '/';
 const options = (Object.keys(localeMeta) as Lang[]).map((id) => ({
   id,
   ...localeMeta[id],
+  href: localizedPath(id, suffix),
 }));
 ---
 

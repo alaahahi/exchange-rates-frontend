@@ -7,11 +7,14 @@ interface Props {
   apiUrl?: string;
   intervalMs?: number;
   lang?: Lang;
+  /** Office tenant slug — forwarded to /api/exchange-rates?slug= */
+  slug?: string | null;
 }
 
 const apiUrl = (Astro.props.apiUrl ?? '/api').replace(/\/$/, '');
 const intervalMs = Astro.props.intervalMs ?? 30000;
 const lang = Astro.props.lang ?? 'ar';
+const slug = (Astro.props.slug ?? '').trim();
 const t = useTranslations(lang);
 const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
 ---
@@ -21,6 +24,7 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
   class="hidden"
   data-api-url={apiUrl}
   data-interval={String(intervalMs)}
+  data-slug={slug}
   aria-hidden="true"
 ></div>
 
@@ -154,6 +158,10 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
 
   if (root && bar && countdownEl && progressEl) {
     const apiUrl = root.dataset.apiUrl || '/api';
+    const slug = (root.dataset.slug || '').trim();
+    const ratesPath = slug
+      ? `${apiUrl}/exchange-rates?slug=${encodeURIComponent(slug)}`
+      : `${apiUrl}/exchange-rates`;
     const intervalMs = Number(root.dataset.interval || '30000');
     const secondsTotal = Math.max(1, Number(bar.dataset.secondsTotal || Math.round(intervalMs / 1000)));
     const waitingText = bar.dataset.waiting || '';
@@ -277,7 +285,7 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
       if (statusEl) statusEl.textContent = updatingText;
 
       try {
-        const response = await fetch(`${apiUrl}/exchange-rates`, {
+        const response = await fetch(ratesPath, {
           headers: { Accept: 'application/json' },
           cache: 'no-store',
         });

@@ -35,6 +35,16 @@ export type MarketSummary = {
   } | null;
 };
 
+/** Public brand payload for main site or office tenant. */
+export type SiteBrand = {
+  name: string;
+  slug: string | null;
+  logo_url: string;
+  is_primary: boolean;
+  show_ads: boolean;
+  price_mode: 'panel' | 'custom';
+};
+
 export type ApiSuccess<T> = {
   success: true;
   data: T;

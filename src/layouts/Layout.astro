@@ -5,6 +5,7 @@ import JsonLd from '../components/JsonLd.astro';
 import Header from '../components/Header.astro';
 import PromoMarquee from '../components/PromoMarquee.astro';
 import GoogleAnalytics from '../components/GoogleAnalytics.astro';
+import GoogleAdSense from '../components/GoogleAdSense.astro';
 import { siteConfig } from '../config/site';
 import type { Lang } from '../i18n/ui';
 import { localeMeta } from '../i18n/ui';
@@ -20,6 +21,12 @@ interface Props {
   updatedAt?: string | null;
   showGold?: boolean;
   showCurrencies?: boolean;
+  /** Brand display name (tenant or dinar-now). */
+  brandName?: string;
+  logoUrl?: string;
+  /** Google AdSense — main site only. */
+  showAds?: boolean;
+  homeHref?: string;
 }
 
 const {
@@ -32,6 +39,10 @@ const {
   updatedAt = null,
   showGold = true,
   showCurrencies = true,
+  brandName = siteConfig.name,
+  logoUrl = '/logo.png',
+  showAds = false,
+  homeHref,
 } = Astro.props;
 
 const t = useTranslations(lang);
@@ -46,7 +57,7 @@ const htmlLang = localeMeta[lang].htmlLang;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#0d2149" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/png" href={logoUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     {
@@ -83,7 +94,14 @@ const htmlLang = localeMeta[lang].htmlLang;
   </head>
   <body class="flex min-h-screen flex-col">
     <slot name="header">
-      <Header lang={lang} showGold={showGold} showCurrencies={showCurrencies} />
+      <Header
+        lang={lang}
+        showGold={showGold}
+        showCurrencies={showCurrencies}
+        brandName={brandName}
+        logoUrl={logoUrl}
+        homeHref={homeHref}
+      />
     </slot>
     <div class="page-chrome">
       <PromoMarquee lang={lang} />
@@ -95,10 +113,11 @@ const htmlLang = localeMeta[lang].htmlLang;
     <footer class="page-chrome mt-auto border-t border-[var(--color-line)] bg-[var(--color-card)] py-5 pb-16 text-center text-sm text-[var(--color-muted)]">
       <p class="m-0">
         © {new Date().getFullYear()}
-        <span class="font-semibold text-[var(--color-ink)]">dinar</span><span class="font-semibold text-[var(--color-gold)]">-now</span>
+        <span class="font-semibold text-[var(--color-ink)]">{brandName}</span>
         — {t('footerTag')}
       </p>
     </footer>
+    <GoogleAdSense enabled={showAds} />
     <GoogleAnalytics />
   </body>
 </html>

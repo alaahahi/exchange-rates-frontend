@@ -1,0 +1,92 @@
+---
+/**
+ * Display ad unit. Renders only when AdSense client is configured and enabled.
+ * After AdSense approval, set PUBLIC_ADSENSE_SLOT_TOP / PUBLIC_ADSENSE_SLOT_MID
+ * to real slot IDs from the AdSense dashboard.
+ */
+interface Props {
+  enabled?: boolean;
+  slot?: string;
+  format?: 'auto' | 'rectangle' | 'horizontal';
+  label?: string;
+}
+
+const client = (import.meta.env.PUBLIC_ADSENSE_CLIENT || '').trim();
+const slot = (Astro.props.slot || '').trim();
+const enabled = (Astro.props.enabled ?? true) && Boolean(client) && Boolean(slot);
+const format = Astro.props.format ?? 'auto';
+const label = Astro.props.label ?? 'إعلان';
+---
+
+{
+  enabled && (
+    <aside class="ad-slot page-chrome" aria-label={label}>
+      <div class="ad-slot__inner">
+        <ins
+          class="adsbygoogle"
+          style="display:block"
+          data-ad-client={client}
+          data-ad-slot={slot}
+          data-ad-format={format}
+          data-full-width-responsive="true"
+        />
+      </div>
+    </aside>
+  )
+}
+
+{
+  enabled && (
+    <script is:inline>
+      (function () {
+        function pushAd() {
+          try {
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+          } catch (e) {}
+        }
+        if (document.readyState === 'complete') {
+          setTimeout(pushAd, 800);
+        } else {
+          window.addEventListener('load', function () {
+            setTimeout(pushAd, 800);
+          });
+        }
+      })();
+    </script>
+  )
+}
+
+<style>
+  .ad-slot {
+    margin: 0;
+  }
+
+  .ad-slot__inner {
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-line);
+    background: color-mix(in srgb, var(--color-card) 92%, var(--color-navy) 8%);
+  }
+
+  .ad-slot__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 90px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    text-transform: uppercase;
+  }
+
+  .ad-slot__inner :global(ins.adsbygoogle) {
+    width: 100%;
+    min-height: 90px;
+  }
+</style>

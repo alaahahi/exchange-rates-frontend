@@ -1,51 +1,72 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import UsdHero from '../components/UsdHero.astro';
-import ExchangeRatesTable from '../components/ExchangeRatesTable.astro';
-import CurrencyConverter from '../components/CurrencyConverter.astro';
-import RatesTicker from '../components/RatesTicker.astro';
-import StatusMessage from '../components/StatusMessage.astro';
-import MarketStatus from '../components/MarketStatus.astro';
-import GoldRates from '../components/GoldRates.astro';
-import Header from '../components/Header.astro';
-import QuickStats from '../components/QuickStats.astro';
-import QuickUsdPresets from '../components/QuickUsdPresets.astro';
-import InsightCards from '../components/InsightCards.astro';
-import FaqSection from '../components/FaqSection.astro';
-import WeatherCard from '../components/WeatherCard.astro';
-import PartnersSection from '../components/PartnersSection.astro';
-import RatesAutoRefresh from '../components/RatesAutoRefresh.astro';
-import SeoContent from '../components/SeoContent.astro';
+import UsdHero from './UsdHero.astro';
+import ExchangeRatesTable from './ExchangeRatesTable.astro';
+import CurrencyConverter from './CurrencyConverter.astro';
+import RatesTicker from './RatesTicker.astro';
+import StatusMessage from './StatusMessage.astro';
+import MarketStatus from './MarketStatus.astro';
+import GoldRates from './GoldRates.astro';
+import Header from './Header.astro';
+import QuickStats from './QuickStats.astro';
+import QuickUsdPresets from './QuickUsdPresets.astro';
+import InsightCards from './InsightCards.astro';
+import FaqSection from './FaqSection.astro';
+import WeatherCard from './WeatherCard.astro';
+import PartnersSection from './PartnersSection.astro';
+import RatesAutoRefresh from './RatesAutoRefresh.astro';
+import SeoContent from './SeoContent.astro';
+import AdSlot from './AdSlot.astro';
 import { siteConfig } from '../config/site';
 import { getExchangeRates } from '../lib/api/exchangeRates';
 import { getGoldRates } from '../lib/api/goldRates';
 import { getMarketSummary } from '../lib/api/marketSummary';
+import { getSiteBrand } from '../lib/api/site';
 import { ApiError } from '../lib/api/errors';
-import type { ExchangeRate, GoldRate, MarketSummary } from '../lib/api/types';
+import type { ExchangeRate, GoldRate, MarketSummary, SiteBrand } from '../lib/api/types';
 import type { Lang } from '../i18n/ui';
 import { ui, currencyNamesEn, currencyNamesKu, goldNamesEn, goldNamesKu } from '../i18n/ui';
-import { useTranslations, alternateUrls } from '../i18n/utils';
+import { useTranslations, alternateUrls, localizedPath } from '../i18n/utils';
 
 interface Props {
   lang: Lang;
+  /** Office tenant slug — omit on main dinar-now site. */
+  slug?: string | null;
 }
 
-const { lang } = Astro.props;
+const { lang, slug = null } = Astro.props;
 const t = useTranslations(lang);
 const dict = ui[lang];
+const pathSuffix = slug ? `/o/${slug}` : '/';
+const homeHref = localizedPath(lang, pathSuffix);
 
 let rates: ExchangeRate[] = [];
 let goldRates: GoldRate[] = [];
 let marketSummary: MarketSummary | null = null;
 let errorMessage: string | null = null;
+let brand: SiteBrand = {
+  name: siteConfig.name,
+  slug: null,
+  logo_url: '/logo.png',
+  is_primary: true,
+  show_ads: true,
+  price_mode: 'panel',
+};
 
 try {
   const fetchInit = { headers: { 'Cache-Control': 'no-cache' } };
-  const [exchangeResult, goldResult, marketResult] = await Promise.allSettled([
-    getExchangeRates(fetchInit),
+  const [brandResult, exchangeResult, goldResult, marketResult] = await Promise.allSettled([
+    getSiteBrand(slug, fetchInit),
+    getExchangeRates(fetchInit, slug),
     getGoldRates(fetchInit),
     getMarketSummary(fetchInit),
   ]);
+
+  if (brandResult.status === 'fulfilled') {
+    brand = brandResult.value;
+  } else if (slug) {
+    throw brandResult.reason;
+  }
 
   if (exchangeResult.status === 'fulfilled') {
     rates = exchangeResult.value;
@@ -63,6 +84,12 @@ try {
 } catch (error) {
   errorMessage = error instanceof ApiError ? error.message : t('loadError');
 }
+
+const showAds = Boolean(brand.is_primary && brand.show_ads);
+const brandName = brand.name || siteConfig.name;
+const logoUrl = brand.logo_url || '/logo.png';
+const slotTop = (import.meta.env.PUBLIC_ADSENSE_SLOT_TOP || '').trim();
+const slotMid = (import.meta.env.PUBLIC_ADSENSE_SLOT_MID || '').trim();
 
 if (lang === 'en' || lang === 'ku') {
   const currencyNames = lang === 'en' ? currencyNamesEn : currencyNamesKu;
@@ -104,7 +131,7 @@ const pageDescription = usdRate
   ? dict.descriptionWithPrice(Math.round(usdRate.buy), Math.round(usdRate.sell))
   : t('descriptionFallback');
 
-const alternates = alternateUrls(siteConfig.url);
+const alternates = alternateUrls(siteConfig.url, pathSuffix === '/' ? '/' : pathSuffix);
 const canonical = alternates[lang];
 const htmlLang = lang === 'ku' ? 'ckb' : lang;
 
@@ -121,9 +148,11 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: siteConfig.name,
-    alternateName: ['dinar-now', 'سعر الصرف في العراق', 'سعر الصرف في العراق الآن', 'Iraq exchange rate'],
-    url: siteConfig.url,
+    name: brandName,
+    alternateName: brand.is_primary
+      ? ['dinar-now', 'سعر الصرف في العراق', 'سعر الصرف في العراق الآن', 'Iraq exchange rate']
+      : [brandName],
+    url: canonical,
     description: pageDescription,
     inLanguage: [htmlLang, 'ar', 'en', 'ckb'],
   },
@@ -134,7 +163,7 @@ const jsonLd = [
     description: pageDescription,
     url: canonical,
     inLanguage: htmlLang,
-    isPartOf: { '@type': 'WebSite', name: siteConfig.name, url: siteConfig.url },
+    isPartOf: { '@type': 'WebSite', name: brandName, url: canonical },
     about: [
       { '@type': 'Thing', name: 'سعر الصرف في العراق' },
       { '@type': 'Thing', name: 'سعر الدولار في العراق' },
@@ -147,10 +176,10 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: siteConfig.name,
-    url: siteConfig.url,
-    logo: new URL('/logo.png', siteConfig.url).toString(),
-    sameAs: ['https://www.cbi.iq/', 'https://qi.iq/ar/home', 'https://fib.iq/'],
+    name: brandName,
+    url: canonical,
+    logo: logoUrl.startsWith('http') ? logoUrl : new URL(logoUrl, siteConfig.url).toString(),
+    sameAs: brand.is_primary ? ['https://www.cbi.iq/', 'https://qi.iq/ar/home', 'https://fib.iq/'] : undefined,
   },
   {
     '@context': 'https://schema.org',
@@ -165,7 +194,7 @@ const jsonLd = [
           name: pageTitle,
           description: pageDescription,
           url: canonical,
-          creator: { '@type': 'Organization', name: siteConfig.name },
+          creator: { '@type': 'Organization', name: brandName },
           temporalCoverage: latestUpdate ?? undefined,
           variableMeasured: [
             { '@type': 'PropertyValue', name: 'USD buy', value: usdRate.buy, unitText: 'IQD per 100 USD' },
@@ -187,12 +216,20 @@ const jsonLd = [
   updatedAt={latestUpdate}
   showGold={goldRates.length > 0}
   showCurrencies={otherRates.length > 0}
+  brandName={brandName}
+  logoUrl={logoUrl}
+  showAds={showAds}
+  homeHref={homeHref}
 >
   <Header
     slot="header"
     lang={lang}
     showGold={goldRates.length > 0}
     showCurrencies={otherRates.length > 0}
+    brandName={brandName}
+    logoUrl={logoUrl}
+    homeHref={homeHref}
+    pathSuffix={pathSuffix === '/' ? '' : pathSuffix}
   />
 
   {rates.length > 0 && <RatesTicker slot="ticker" rates={rates} />}
@@ -204,13 +241,15 @@ const jsonLd = [
       <StatusMessage type="empty" message={t('emptyRates')} />
     ) : (
       <>
-        <RatesAutoRefresh intervalMs={30000} lang={lang} />
+        <RatesAutoRefresh intervalMs={30000} lang={lang} slug={slug} />
         <div id="page-shell" class="space-y-4" data-active-panel="all">
         {marketSummary ? (
           <div class="page-chrome">
             <MarketStatus summary={marketSummary} lang={lang} />
           </div>
         ) : null}
+
+        <AdSlot enabled={showAds} slot={slotTop} format="horizontal" label="إعلان" />
 
         <QuickStats
           usd={usdRate}
@@ -235,6 +274,8 @@ const jsonLd = [
         </div>
 
         {usdRate && <QuickUsdPresets usd={usdRate} lang={lang} />}
+
+        <AdSlot enabled={showAds} slot={slotMid} format="rectangle" label="إعلان" />
 
         <InsightCards lang={lang} />
 

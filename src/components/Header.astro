@@ -10,10 +10,24 @@ interface Props {
   lang?: Lang;
   showGold?: boolean;
   showCurrencies?: boolean;
+  brandName?: string;
+  logoUrl?: string;
+  homeHref?: string;
+  /** Path suffix for language links, e.g. /o/office-slug */
+  pathSuffix?: string;
 }
 
-const { lang = 'ar', showGold = true, showCurrencies = true } = Astro.props;
+const {
+  lang = 'ar',
+  showGold = true,
+  showCurrencies = true,
+  brandName = siteConfig.name,
+  logoUrl = '/logo.png',
+  homeHref,
+  pathSuffix = '',
+} = Astro.props;
 const t = useTranslations(lang);
+const brandHome = homeHref ?? homePath(lang);
 
 const items = [
   { id: 'all', label: t('navHome') },
@@ -29,27 +43,27 @@ const items = [
   <div class="site-header__frame mx-auto max-w-6xl px-3 py-3 sm:px-6 sm:py-4">
     <div class="site-header__top">
       <div class="site-header__tools">
-        <LanguageSwitcher lang={lang} />
+        <LanguageSwitcher lang={lang} pathSuffix={pathSuffix} />
         <AppearancePanel lang={lang} />
         <ThemeToggle />
       </div>
 
       <a
-        href={homePath(lang)}
+        href={brandHome}
         class="site-header__brand no-underline"
-        aria-label={siteConfig.name}
+        aria-label={brandName}
         data-focus-reset
       >
         <span class="site-header__crest" aria-hidden="true"></span>
         <img
-          src="/logo.png"
-          alt={siteConfig.name}
+          src={logoUrl}
+          alt={brandName}
           width="148"
           height="66"
           class="site-header__logo"
           decoding="async"
         />
-        <span class="site-header__subtitle">{siteConfig.description}</span>
+        <span class="site-header__subtitle">{brandName}</span>
       </a>
 
       <div class="site-header__meta" aria-hidden="true">

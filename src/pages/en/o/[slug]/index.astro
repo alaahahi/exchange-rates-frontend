@@ -1,0 +1,12 @@
+---
+import HomePage from '../../../../components/HomePage.astro';
+
+export const prerender = false;
+
+const slug = Astro.params.slug?.trim() || '';
+if (!slug) {
+  return Astro.redirect('/en');
+}
+---
+
+<HomePage lang="en" slug={slug} />

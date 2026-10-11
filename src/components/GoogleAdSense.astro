@@ -1,0 +1,39 @@
+---
+/**
+ * Deferred AdSense loader — main site only.
+ * Set PUBLIC_ADSENSE_CLIENT=ca-pub-xxxxxxxx in .env after AdSense approval.
+ */
+interface Props {
+  enabled?: boolean;
+}
+
+const client = (import.meta.env.PUBLIC_ADSENSE_CLIENT || '').trim();
+const enabled = (Astro.props.enabled ?? true) && Boolean(client);
+---
+
+{
+  enabled && (
+    <script is:inline define:vars={{ client }}>
+      (function () {
+        if (!client || window.__adsenseBooted) return;
+        window.__adsenseBooted = true;
+
+        function boot() {
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(client);
+          s.crossOrigin = 'anonymous';
+          document.head.appendChild(s);
+        }
+
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(boot, { timeout: 4000 });
+        } else {
+          window.addEventListener('load', function () {
+            setTimeout(boot, 1500);
+          });
+        }
+      })();
+    </script>
+  )
+}
