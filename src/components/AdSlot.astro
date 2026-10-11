@@ -1,8 +1,8 @@
 ---
+import { ADSENSE_CLIENT } from '../config/adsense';
+
 /**
- * Display ad unit. Renders only when AdSense client is configured and enabled.
- * After AdSense approval, set PUBLIC_ADSENSE_SLOT_TOP / PUBLIC_ADSENSE_SLOT_MID
- * to real slot IDs from the AdSense dashboard.
+ * Display ad unit (optional manual slots). Auto ads work via GoogleAdSense alone.
  */
 interface Props {
   enabled?: boolean;
@@ -11,9 +11,9 @@ interface Props {
   label?: string;
 }
 
-const client = (import.meta.env.PUBLIC_ADSENSE_CLIENT || '').trim();
+const client = ADSENSE_CLIENT;
 const slot = (Astro.props.slot || '').trim();
-const enabled = (Astro.props.enabled ?? true) && Boolean(client) && Boolean(slot);
+const enabled = (Astro.props.enabled ?? true) && Boolean(slot);
 const format = Astro.props.format ?? 'auto';
 const label = Astro.props.label ?? 'إعلان';
 ---
@@ -70,19 +70,6 @@ const label = Astro.props.label ?? 'إعلان';
     border-radius: 0.85rem;
     border: 1px solid var(--color-line);
     background: color-mix(in srgb, var(--color-card) 92%, var(--color-navy) 8%);
-  }
-
-  .ad-slot__placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 90px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-muted);
-    text-transform: uppercase;
   }
 
   .ad-slot__inner :global(ins.adsbygoogle) {

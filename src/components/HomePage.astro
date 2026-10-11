@@ -88,8 +88,8 @@ try {
 const showAds = Boolean(brand.is_primary && brand.show_ads);
 const brandName = brand.name || siteConfig.name;
 const logoUrl = brand.logo_url || '/logo.png';
-const slotTop = (import.meta.env.PUBLIC_ADSENSE_SLOT_TOP || '').trim();
-const slotMid = (import.meta.env.PUBLIC_ADSENSE_SLOT_MID || '').trim();
+const slotTop = '';
+const slotMid = '';
 
 if (lang === 'en' || lang === 'ku') {
   const currencyNames = lang === 'en' ? currencyNamesEn : currencyNamesKu;
