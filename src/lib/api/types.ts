@@ -45,9 +45,24 @@ export type SiteBrand = {
   price_mode: 'panel' | 'custom';
 };
 
+export type MarketLocation = {
+  id: string;
+  label: string;
+};
+
+export type ExchangeRatesMeta = {
+  source?: string | null;
+  source_label?: string | null;
+  live_enabled?: boolean;
+  last_synced_at?: string | null;
+  location?: string;
+  locations?: MarketLocation[];
+};
+
 export type ApiSuccess<T> = {
   success: true;
   data: T;
+  meta?: ExchangeRatesMeta;
 };
 
 export type ApiFailure = {

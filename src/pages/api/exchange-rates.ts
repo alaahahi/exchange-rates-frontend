@@ -11,8 +11,12 @@ export const GET: APIRoute = async ({ url }) => {
     });
   }
 
+  const params = new URLSearchParams();
   const slug = (url.searchParams.get('slug') || '').trim();
-  const qs = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+  const location = (url.searchParams.get('location') || '').trim();
+  if (slug) params.set('slug', slug);
+  if (location) params.set('location', location);
+  const qs = params.toString() ? `?${params.toString()}` : '';
 
   try {
     const response = await fetch(`${apiBase}/exchange-rates${qs}`, {

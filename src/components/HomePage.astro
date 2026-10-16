@@ -15,15 +15,16 @@ import FaqSection from './FaqSection.astro';
 import WeatherCard from './WeatherCard.astro';
 import PartnersSection from './PartnersSection.astro';
 import RatesAutoRefresh from './RatesAutoRefresh.astro';
+import LocationSwitcher from './LocationSwitcher.astro';
 import SeoContent from './SeoContent.astro';
 import AdSlot from './AdSlot.astro';
 import { siteConfig } from '../config/site';
-import { getExchangeRates } from '../lib/api/exchangeRates';
+import { DEFAULT_MARKET_LOCATION, getExchangeRatesBundle } from '../lib/api/exchangeRates';
 import { getGoldRates } from '../lib/api/goldRates';
 import { getMarketSummary } from '../lib/api/marketSummary';
 import { getSiteBrand } from '../lib/api/site';
 import { ApiError } from '../lib/api/errors';
-import type { ExchangeRate, GoldRate, MarketSummary, SiteBrand } from '../lib/api/types';
+import type { ExchangeRate, ExchangeRatesMeta, GoldRate, MarketSummary, SiteBrand } from '../lib/api/types';
 import type { Lang } from '../i18n/ui';
 import { ui, currencyNamesEn, currencyNamesKu, goldNamesEn, goldNamesKu } from '../i18n/ui';
 import { useTranslations, alternateUrls, localizedPath } from '../i18n/utils';
@@ -43,6 +44,10 @@ const homeHref = localizedPath(lang, pathSuffix);
 let rates: ExchangeRate[] = [];
 let goldRates: GoldRate[] = [];
 let marketSummary: MarketSummary | null = null;
+let ratesMeta: ExchangeRatesMeta = {
+  location: DEFAULT_MARKET_LOCATION,
+  locations: [],
+};
 let errorMessage: string | null = null;
 let brand: SiteBrand = {
   name: siteConfig.name,
@@ -57,7 +62,7 @@ try {
   const fetchInit = { headers: { 'Cache-Control': 'no-cache' } };
   const [brandResult, exchangeResult, goldResult, marketResult] = await Promise.allSettled([
     getSiteBrand(slug, fetchInit),
-    getExchangeRates(fetchInit, slug),
+    getExchangeRatesBundle(fetchInit, slug, DEFAULT_MARKET_LOCATION),
     getGoldRates(fetchInit),
     getMarketSummary(fetchInit),
   ]);
@@ -69,7 +74,8 @@ try {
   }
 
   if (exchangeResult.status === 'fulfilled') {
-    rates = exchangeResult.value;
+    rates = exchangeResult.value.rates;
+    ratesMeta = exchangeResult.value.meta;
   } else {
     throw exchangeResult.reason;
   }
@@ -241,8 +247,18 @@ const jsonLd = [
       <StatusMessage type="empty" message={t('emptyRates')} />
     ) : (
       <>
-        <RatesAutoRefresh intervalMs={30000} lang={lang} slug={slug} />
+        <RatesAutoRefresh
+          intervalMs={30000}
+          lang={lang}
+          slug={slug}
+          location={ratesMeta.location || DEFAULT_MARKET_LOCATION}
+        />
         <div id="page-shell" class="space-y-4" data-active-panel="all">
+        <LocationSwitcher
+          lang={lang}
+          locations={ratesMeta.locations || []}
+          active={ratesMeta.location || DEFAULT_MARKET_LOCATION}
+        />
         {marketSummary ? (
           <div class="page-chrome">
             <MarketStatus summary={marketSummary} lang={lang} />

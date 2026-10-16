@@ -9,12 +9,15 @@ interface Props {
   lang?: Lang;
   /** Office tenant slug — forwarded to /api/exchange-rates?slug= */
   slug?: string | null;
+  /** Governorate id — default erbil */
+  location?: string | null;
 }
 
 const apiUrl = (Astro.props.apiUrl ?? '/api').replace(/\/$/, '');
 const intervalMs = Astro.props.intervalMs ?? 30000;
 const lang = Astro.props.lang ?? 'ar';
 const slug = (Astro.props.slug ?? '').trim();
+const location = (Astro.props.location ?? 'erbil').trim() || 'erbil';
 const t = useTranslations(lang);
 const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
 ---
@@ -25,6 +28,7 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
   data-api-url={apiUrl}
   data-interval={String(intervalMs)}
   data-slug={slug}
+  data-location={location}
   aria-hidden="true"
 ></div>
 
@@ -159,9 +163,11 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
   if (root && bar && countdownEl && progressEl) {
     const apiUrl = root.dataset.apiUrl || '/api';
     const slug = (root.dataset.slug || '').trim();
-    const ratesPath = slug
-      ? `${apiUrl}/exchange-rates?slug=${encodeURIComponent(slug)}`
-      : `${apiUrl}/exchange-rates`;
+    let location = (root.dataset.location || 'erbil').trim() || 'erbil';
+    try {
+      const stored = localStorage.getItem('dinar-market-location');
+      if (stored) location = stored;
+    } catch {}
     const intervalMs = Number(root.dataset.interval || '30000');
     const secondsTotal = Math.max(1, Number(bar.dataset.secondsTotal || Math.round(intervalMs / 1000)));
     const waitingText = bar.dataset.waiting || '';
@@ -169,6 +175,14 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
     let secondsLeft = secondsTotal;
     let tickTimer: number | null = null;
     let inFlight = false;
+
+    function ratesPath(): string {
+      const params = new URLSearchParams();
+      if (slug) params.set('slug', slug);
+      if (location) params.set('location', location);
+      const qs = params.toString();
+      return `${apiUrl}/exchange-rates${qs ? `?${qs}` : ''}`;
+    }
 
     const numberFmt = new Intl.NumberFormat('en-US', { useGrouping: false, maximumFractionDigits: 4 });
     const intFmt = new Intl.NumberFormat('en-US', { useGrouping: false, maximumFractionDigits: 0 });
@@ -285,7 +299,7 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
       if (statusEl) statusEl.textContent = updatingText;
 
       try {
-        const response = await fetch(ratesPath, {
+        const response = await fetch(ratesPath(), {
           headers: { Accept: 'application/json' },
           cache: 'no-store',
         });
@@ -334,6 +348,16 @@ const secondsTotal = Math.max(1, Math.round(intervalMs / 1000));
         void poll();
       }
     });
+
+    window.addEventListener('market:location', ((event: CustomEvent<{ location?: string }>) => {
+      const next = (event.detail?.location || '').trim();
+      if (!next || next === location) return;
+      location = next;
+      root.dataset.location = next;
+      secondsLeft = secondsTotal;
+      renderCountdown();
+      void poll();
+    }) as EventListener);
 
     start();
   }

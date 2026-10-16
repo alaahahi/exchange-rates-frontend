@@ -1,0 +1,129 @@
+---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+import type { MarketLocation } from '../lib/api/types';
+import { DEFAULT_MARKET_LOCATION } from '../lib/api/exchangeRates';
+
+interface Props {
+  lang?: Lang;
+  locations?: MarketLocation[];
+  active?: string;
+}
+
+const { lang = 'ar', locations = [], active = DEFAULT_MARKET_LOCATION } = Astro.props;
+const t = useTranslations(lang);
+
+const options =
+  locations.length > 0
+    ? locations
+    : [
+        { id: 'erbil', label: t('locErbil') },
+        { id: 'baghdad', label: t('locBaghdad') },
+        { id: 'sulaymaniah', label: t('locSulaymaniah') },
+        { id: 'duhok', label: t('locDuhok') },
+        { id: 'kirkuk', label: t('locKirkuk') },
+      ];
+---
+
+<div class="location-switcher page-chrome" data-location-switcher data-active={active}>
+  <p class="location-switcher__label">{t('locationLabel')}</p>
+  <div class="location-switcher__row" role="tablist" aria-label={t('locationLabel')}>
+    {
+      options.map((option) => (
+        <button
+          type="button"
+          class:list={['location-switcher__btn', option.id === active && 'is-active']}
+          data-location={option.id}
+          role="tab"
+          aria-selected={option.id === active ? 'true' : 'false'}
+        >
+          {option.label}
+        </button>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .location-switcher {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .location-switcher__label {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .location-switcher__row {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+
+  .location-switcher__btn {
+    flex: 0 0 auto;
+    min-height: 2.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: var(--color-card);
+    color: var(--color-ink);
+    padding: 0.4rem 0.95rem;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+
+  .location-switcher__btn:hover {
+    border-color: color-mix(in srgb, var(--color-gold) 55%, var(--color-line));
+  }
+
+  .location-switcher__btn.is-active {
+    border-color: color-mix(in srgb, var(--color-gold) 70%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-gold) 28%, white), var(--color-gold));
+    color: var(--color-navy);
+  }
+</style>
+
+<script>
+  const STORAGE_KEY = 'dinar-market-location';
+  const root = document.querySelector<HTMLElement>('[data-location-switcher]');
+  if (root) {
+    const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-location]'));
+
+    function setActive(id: string): void {
+      buttons.forEach((button) => {
+        const active = button.dataset.location === id;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      root.dataset.active = id;
+      try {
+        localStorage.setItem(STORAGE_KEY, id);
+      } catch {}
+      window.dispatchEvent(new CustomEvent('market:location', { detail: { location: id } }));
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = button.dataset.location || 'erbil';
+        setActive(id);
+      });
+    });
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && buttons.some((button) => button.dataset.location === stored)) {
+        if (stored !== root.dataset.active) {
+          setActive(stored);
+        }
+      }
+    } catch {}
+  }
+</script>

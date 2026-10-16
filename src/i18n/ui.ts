@@ -32,6 +32,12 @@ type UiStrings = {
   heroEyebrow: string;
   heroTitle: string;
   heroSubtitle: string;
+  locationLabel: string;
+  locErbil: string;
+  locBaghdad: string;
+  locSulaymaniah: string;
+  locDuhok: string;
+  locKirkuk: string;
   perHundredUsd: string;
   perHundredUnit: string;
   buy: string;
@@ -140,6 +146,12 @@ export const ui: Record<Lang, UiStrings> = {
     heroEyebrow: 'تحديث مباشر من السوق',
     heroTitle: 'سعر الصرف في العراق',
     heroSubtitle: 'دولار ودينار — شراء ومبيع الآن',
+    locationLabel: 'المحافظة',
+    locErbil: 'أربيل',
+    locBaghdad: 'بغداد',
+    locSulaymaniah: 'السليمانية',
+    locDuhok: 'دهوك',
+    locKirkuk: 'كركوك',
     perHundredUsd: 'لكل 100$',
     perHundredUnit: 'لكل 100',
     buy: 'شراء',
@@ -258,6 +270,12 @@ export const ui: Record<Lang, UiStrings> = {
     heroEyebrow: 'Top rate today',
     heroTitle: 'USD / IQD',
     heroSubtitle: 'Against the Iraqi Dinar',
+    locationLabel: 'Governorate',
+    locErbil: 'Erbil',
+    locBaghdad: 'Baghdad',
+    locSulaymaniah: 'Sulaymaniyah',
+    locDuhok: 'Duhok',
+    locKirkuk: 'Kirkuk',
     perHundredUsd: 'per $100',
     perHundredUnit: 'per 100',
     buy: 'Buy',
@@ -376,6 +394,12 @@ export const ui: Record<Lang, UiStrings> = {
     heroEyebrow: 'گرنگترین نرخ ئەمڕۆ',
     heroTitle: 'دۆلار / دینار',
     heroSubtitle: 'بەرامبەر دیناری عێراقی',
+    locationLabel: 'پارێزگا',
+    locErbil: 'هەولێر',
+    locBaghdad: 'بەغدا',
+    locSulaymaniah: 'سلێمانی',
+    locDuhok: 'دهۆک',
+    locKirkuk: 'کەرکوک',
     perHundredUsd: 'بۆ هەر 100$',
     perHundredUnit: 'بۆ هەر 100',
     buy: 'کڕین',
